@@ -1,0 +1,90 @@
+/* src/components/ExpenseForm.css */
+.expense-form {
+  background-color: #fff;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+.form-group-last {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.amount-input {
+  width: 100%;
+  padding: 12px;
+  font-size: 1.2rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
+.category-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.category-btn {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.85rem;
+  cursor: pointer;
+  flex: 1 1 auto;
+}
+
+.category-btn.main-default {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.category-btn.main-active {
+  background-color: #1976d2;
+  color: #fff;
+}
+
+.category-btn.sub-default {
+  background-color: #f0f0f0;
+  color: #333;
+  font-weight: normal;
+}
+
+.category-btn.sub-active {
+  background-color: #ffb300;
+  color: #333;
+  font-weight: bold;
+}
+
+.payment-select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 0.9rem;
+  background-color: #fff;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 14px;
+  background-color: #2e7d32;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+}

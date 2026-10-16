@@ -1,0 +1,24 @@
+/* src/components/FloatingAddButton.css */
+.floating-add-btn {
+  position: fixed;
+  bottom: 75px; /* 下部タブバーに重ならない高さ */
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  background-color: #2e7d32;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  font-size: 1.8rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  z-index: 1001;
+  transition: transform 0.2s;
+}
+
+.floating-add-btn:active {
+  transform: scale(0.95); /* 押したときに少し縮む演出 */
+}
