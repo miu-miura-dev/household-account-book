@@ -1,0 +1,157 @@
+/* src/components/ExpenseHistory.css */
+
+.expense-history-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 一番上の月・決済別サマリーカード */
+.expense-summary-header {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  padding: 12px 16px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.expense-summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.expense-summary-label {
+  font-size: 0.75rem;
+  color: #666;
+  margin-bottom: 2px;
+}
+
+.expense-summary-value {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #2e7d32;
+}
+
+/* 日付ごとのグループカード */
+.expense-date-group {
+  background-color: #fff;
+  padding: 14px 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.expense-date-heading {
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: #555;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 6px;
+  margin: 0 0 8px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.expense-date-total {
+  font-size: 0.85rem;
+  color: #333;
+  font-weight: bold;
+}
+
+.expense-history-empty {
+  font-size: 0.85rem;
+  color: #888;
+  text-align: center;
+  background-color: #fff;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.expense-history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* ★ 各支出項目の行の高さ・幅を強制的に固定する */
+.expense-history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 48px;             /* 行の高さを固定 */
+  box-sizing: border-box;
+  padding: 4px 0;
+  border-bottom: 1px solid #f5f5f5;
+  overflow: hidden;         /* はみ出た分を隠す */
+}
+
+.expense-history-item:last-child {
+  border-bottom: none;
+}
+
+/* 左側のテキストエリア */
+.expense-history-details {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+  padding-right: 12px;
+  height: 100%;
+}
+
+/* 中項目と支出元を1行にする */
+.expense-history-main-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.expense-history-category-main {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.expense-history-payment {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+/* ★ メモがある場合も、行の高さを変えずに1行で省略表示する設定 */
+.expense-history-memo {
+  font-size: 0.7rem;
+  color: #888;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 右側の金額と削除ボタン */
+.expense-history-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.expense-history-amount {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #2e7d32;
+}
+
+.expense-history-delete-btn {
+  background-color: transparent;
+  border: none;
+  color: #c62828;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 2px 4px;
+}

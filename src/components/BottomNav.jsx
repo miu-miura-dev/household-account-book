@@ -18,6 +18,19 @@ export default function BottomNav({ activeTab, setActiveTab }) {
       zIndex: 1000,
     }}>
       <button 
+        onClick={() => setActiveTab('input')}
+        style={{
+          background: 'none',
+          border: 'none',
+          fontSize: '0.8rem',
+          color: activeTab === 'input' ? '#2e7d32' : '#666',
+          fontWeight: activeTab === 'input' ? 'bold' : 'normal',
+          cursor: 'pointer'
+        }}
+      >
+        ✍️ 新規入力
+      </button>
+      <button 
         onClick={() => setActiveTab('dashboard')}
         style={{
           background: 'none',

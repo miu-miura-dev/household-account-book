@@ -1,18 +1,36 @@
 /* src/components/ExpenseForm.css */
-.expense-form {
-  background-color: #fff;
-  padding: 16px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  margin-bottom: 20px;
+
+/* 背景のオーバーレイ（必要であれば、フォームの背後を暗くするためのコンテナ用。不要なら削除可能です） */
+.expense-form-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end; /* 下寄せにする */
+  z-index: 1000;
 }
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+
 
 .form-group {
   margin-bottom: 12px;
 }
 
 .form-group-last {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .form-label {
@@ -22,13 +40,22 @@
   margin-bottom: 4px;
 }
 
-.amount-input {
+.amount-input,
+.date-input,
+.memo-input {
   width: 100%;
   padding: 12px;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   border-radius: 8px;
   border: 1px solid #ccc;
   box-sizing: border-box;
+  outline: none;
+}
+
+.amount-input:focus,
+.date-input:focus,
+.memo-input:focus {
+  border-color: #2e7d32;
 }
 
 .category-container {
@@ -75,6 +102,7 @@
   border: 1px solid #ccc;
   font-size: 0.9rem;
   background-color: #fff;
+  box-sizing: border-box;
 }
 
 .submit-btn {
@@ -87,4 +115,8 @@
   font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
+}
+
+.submit-btn:active {
+  background-color: #1b5e20;
 }
