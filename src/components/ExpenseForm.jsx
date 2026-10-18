@@ -45,23 +45,25 @@ export default function ExpenseForm({ onAddExpense }) {
   return (
     <form onSubmit={handleSubmit} className="expense-form">
 
-      <h1 className="expense-form-title">新規記録</h1>
+      <h1 className="expense-form-title">新規入力</h1>
 
-      {/* 金額 */}
-      <div className="form-group">
-        <label className="form-label">金額（円）</label>
-        <input 
-          ref={inputRef}
-          type="number" 
-          pattern="\d*"
-          value={amount} 
-          onChange={(e) => setAmount(e.target.value)} 
-          placeholder="例: 1200" 
-          required
-          autoFocus
-          className="amount-input"
-        />
-      </div>
+{/* 金額 */}
+<div className="form-group">
+  <div className="amount-input-wrapper">
+    <span className="currency-symbol">¥</span>
+    <input 
+      ref={inputRef}
+      type="number" 
+      pattern="\d*"
+      value={amount} 
+      onChange={(e) => setAmount(e.target.value)} 
+      placeholder="0" 
+      required
+      autoFocus
+      className="amount-input"
+    />
+  </div>
+</div>
 
       {/* 大項目 */}
       <div className="form-group">
@@ -130,7 +132,6 @@ export default function ExpenseForm({ onAddExpense }) {
           type="text"
           value={memo}
           onChange={(e) => setMemo(e.target.value)}
-          placeholder="例: スーパーでの買い出し"
           className="memo-input"
         />
       </div>

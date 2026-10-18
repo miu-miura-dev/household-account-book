@@ -31,19 +31,6 @@ export default function BottomNav({ activeTab, setActiveTab }) {
         ✍️ 新規入力
       </button>
       <button 
-        onClick={() => setActiveTab('dashboard')}
-        style={{
-          background: 'none',
-          border: 'none',
-          fontSize: '0.8rem',
-          color: activeTab === 'dashboard' ? '#2e7d32' : '#666',
-          fontWeight: activeTab === 'dashboard' ? 'bold' : 'normal',
-          cursor: 'pointer'
-        }}
-      >
-        🏠 ダッシュボード
-      </button>
-      <button 
         onClick={() => setActiveTab('history')}
         style={{
           background: 'none',
@@ -55,6 +42,19 @@ export default function BottomNav({ activeTab, setActiveTab }) {
         }}
       >
         📜 履歴
+      </button>
+      <button 
+        onClick={() => setActiveTab('dashboard')}
+        style={{
+          background: 'none',
+          border: 'none',
+          fontSize: '0.8rem',
+          color: activeTab === 'dashboard' ? '#2e7d32' : '#666',
+          fontWeight: activeTab === 'dashboard' ? 'bold' : 'normal',
+          cursor: 'pointer'
+        }}
+      >
+        🏠 ダッシュボード
       </button>
     </div>
   );

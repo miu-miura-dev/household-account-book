@@ -74,17 +74,19 @@ export default function Kakeibo() {
         </div>
       )}
 
+       {activeTab === 'history' && (
+        <div>
+          <ExpenseHistory expenses={expenses} onDeleteExpense={handleDeleteExpense} />
+        </div>
+      )}
+
       {activeTab === 'dashboard' && (
         <div>
           <BudgetSummary expenses={expenses} />
         </div>
       )}
 
-      {activeTab === 'history' && (
-        <div>
-          <ExpenseHistory expenses={expenses} onDeleteExpense={handleDeleteExpense} />
-        </div>
-      )}
+
 
       <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
     </div>
