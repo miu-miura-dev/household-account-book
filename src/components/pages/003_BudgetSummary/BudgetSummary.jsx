@@ -160,7 +160,7 @@ export default function BudgetSummary({ expenses = [] }) {
     <div className="budget-summary-container">
       {/* A. ヘッダー ＆ 設定ボタン */}
       <div className="budget-header">
-        <h2 className="budget-title">予算ダッシュボード</h2>
+        <h2 className="budget-title">DASHBOARD</h2>
         <button 
           type="button" 
           onClick={() => setIsEditingConfig(!isEditingConfig)}
@@ -248,23 +248,23 @@ export default function BudgetSummary({ expenses = [] }) {
         </div>
       </div>
 
-      {/* D. 期間切り替え ＆ 繰り越し切り替え */}
+    {/* D. コントロールバー */}
       <div className="control-bar">
-        {/* 期間切り替えタブ */}
+        {/* 期間切り替えタブ（アルファベット表記） */}
         <div className="view-mode-tabs">
-          <button type="button" className={`tab-btn ${viewMode === 'day' ? 'active' : ''}`} onClick={() => setViewMode('day')}>1日</button>
-          <button type="button" className={`tab-btn ${viewMode === 'week' ? 'active' : ''}`} onClick={() => setViewMode('week')}>週ごと</button>
-          <button type="button" className={`tab-btn ${viewMode === 'month' ? 'active' : ''}`} onClick={() => setViewMode('month')}>月単位</button>
+          <button type="button" className={`tab-btn ${viewMode === 'day' ? 'active' : ''}`} onClick={() => setViewMode('day')}>DAY</button>
+          <button type="button" className={`tab-btn ${viewMode === 'week' ? 'active' : ''}`} onClick={() => setViewMode('week')}>WEEK</button>
+          <button type="button" className={`tab-btn ${viewMode === 'month' ? 'active' : ''}`} onClick={() => setViewMode('month')}>MONTH</button>
         </div>
 
-        {/* 繰り越し切り替えボタン (週・月モード時のみ表示) */}
+        {/* 繰り越し切り替えボタン */}
         {viewMode !== 'day' && (
           <button 
             type="button" 
             className={`carry-toggle-btn ${isCarryOver ? 'active' : ''}`}
             onClick={() => setIsCarryOver(!isCarryOver)}
           >
-            {isCarryOver ? '🔄 繰り越し：ON' : '⏹️ 繰り越し：OFF'}
+            {isCarryOver ? 'CARRY: ON' : 'CARRY: OFF'}
           </button>
         )}
       </div>
