@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import BudgetSummary from "./components/BudgetSummary";
-import ExpenseForm from "./components/ExpenseForm";
-import ExpenseHistory from "./components/ExpenseHistory";
-import BottomNav from "./components/BottomNav";
+import ExpenseForm from "./components/pages/001_ExpenseForm/ExpenseForm";
+import ExpenseHistory from "./components/pages/002_ExpenseHistory/ExpenseHistory";
+import BudgetSummary from "./components/pages/003_BudgetSummary/BudgetSummary";
+import BottomNav from "./components/common/BottomNav";
 import { supabase } from "./supabase";
-import "./Kakeibo.css"; 
+import "./Kakeibo.css";
 
 export default function Kakeibo() {
   const [expenses, setExpenses] = useState([]);

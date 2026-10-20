@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'; 
-import { CATEGORIES, PAYMENT_SOURCES } from '../constants/categories';
+import { CATEGORIES, PAYMENT_SOURCES } from '../../../constants/categories';
 import './ExpenseForm.css';
 
 export default function ExpenseForm({ onAddExpense }) {

@@ -1,0 +1,384 @@
+/* === 全体レイアウト === */
+.budget-summary-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #1e293b;
+}
+
+/* === ヘッダー部分 === */
+.budget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.budget-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+  color: #0f172a;
+}
+
+/* ⚙️ 予算設定ボタン */
+.config-toggle-btn {
+  background-color: transparent;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.config-toggle-btn.active {
+  background-color: #0f172a;
+  color: #fff;
+  border-color: #0f172a;
+}
+
+/* === 📅 ミニカレンダー（月曜始まり） === */
+.mini-calendar-section {
+  background: #fff;
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.mini-calendar-header {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.mini-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.weekday-label {
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+  padding-bottom: 4px;
+}
+
+.weekday-label.sat { color: #3b82f6; }
+.weekday-label.sun { color: #ef4444; }
+
+.calendar-day-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: #64748b;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.calendar-day-cell.empty {
+  background: transparent;
+}
+
+/* 選択中の期間ハイライト */
+.calendar-day-cell.active-range {
+  background-color: #eff6ff;
+  color: #2563eb;
+  font-weight: 700;
+}
+
+/* 今日（Today）の強調 */
+.calendar-day-cell.is-today {
+  border: 1.5px solid #2563eb;
+  color: #2563eb;
+}
+
+/* === 期間切り替えタブ === */
+.view-mode-tabs {
+  display: flex;
+  gap: 4px;
+  background: #f8fafc;
+  padding: 3px;
+  border-radius: 8px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 6px;
+  background-color: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.tab-btn.active {
+  background-color: #fff;
+  color: #0f172a;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* === 全体サマリーカード === */
+.budget-overview-card {
+  background: #fff;
+  border: 1px solid #f1f5f9;
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.budget-overview-label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-bottom: 2px;
+  font-weight: 500;
+}
+
+.budget-overview-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #2563eb;
+}
+
+.budget-overview-card.over .budget-overview-value {
+  color: #ef4444;
+}
+
+.balance-status-text {
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+.budget-overview-sub {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+/* === 大項目ごとの進捗リスト === */
+.category-budget-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.category-budget-item {
+  background: #fff;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #f1f5f9;
+}
+
+.category-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+}
+
+.category-name {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.category-amounts {
+  font-size: 0.85rem;
+}
+
+.text-safe { color: #2563eb; }
+.text-over { color: #ef4444; }
+
+.budget-total-text {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-weight: normal;
+}
+
+/* ペース・ステータス行 */
+.category-pace-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  margin-top: 6px;
+  align-items: center;
+}
+
+.pace-label {
+  color: #94a3b8;
+}
+
+.pace-status {
+  font-weight: 600;
+}
+
+.pace-status.safe { color: #16a34a; }
+.pace-status.over { color: #dc2626; }
+
+/* === プログレスバー ＆ 目安マーカー === */
+.progress-bar-bg {
+  width: 100%;
+  height: 6px;
+  background-color: #f1f5f9;
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background-color: #3b82f6;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.progress-bar-fill.over {
+  background-color: #ef4444;
+}
+
+.pace-marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #0f172a;
+  z-index: 2;
+  transform: translateX(-50%);
+}
+
+/* === 中項目リスト === */
+.sub-category-bar-list {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sub-category-bar-item {
+  font-size: 0.7rem;
+}
+
+.sub-category-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2px;
+  color: #64748b;
+}
+
+.sub-category-amount {
+  font-weight: 600;
+  color: #334155;
+}
+
+.sub-progress-bar-bg {
+  width: 100%;
+  height: 4px;
+  background-color: #f8fafc;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.sub-progress-bar-fill {
+  height: 100%;
+  background-color: #93c5fd;
+  border-radius: 2px;
+}
+
+/* === ⚙️ 予算設定パネル === */
+.budget-config-panel {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.budget-config-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #334155;
+  margin: 0 0 10px 0;
+}
+
+.config-item-box {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+}
+
+.config-main-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.config-input-total,
+.config-input-sub {
+  width: 70px;
+  padding: 2px 4px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  text-align: right;
+  font-size: 0.8rem;
+}
+
+.config-sub-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 8px;
+  margin-top: 4px;
+  border-left: 2px solid #f1f5f9;
+}
+
+.config-sub-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* タブと繰り越しボタンの並び */
+.control-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 繰り越し切り替えボタン */
+.carry-toggle-btn {
+  background-color: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #64748b;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.carry-toggle-btn.active {
+  background-color: #e0f2fe;
+  border-color: #38bdf8;
+  color: #0369a1;
+}
