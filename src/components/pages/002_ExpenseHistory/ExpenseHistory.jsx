@@ -1,10 +1,33 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { CATEGORIES, PAYMENT_SOURCES } from '../../../constants/categories';
 import './ExpenseHistory.css';
 
-export default function ExpenseHistory({ expenses, onDelete }) {
+export default function ExpenseHistory({ expenses, onDeleteExpense, onDelete, onUpdateExpense }) {
+  // 編集中のアイテムを保持するステート（nullでなければ編集モーダルを開く）
+  const [editingItem, setEditingItem] = useState(null);
+
   if (!expenses || expenses.length === 0) {
     return <p className="expense-history-empty">まだ記録がありません</p>;
   }
+
+  // 実際の削除ハンドラー（どちらのプロップス名でも動くように配慮）
+  const handleDelete = (id) => {
+    const deleteFn = onDeleteExpense || onDelete;
+    if (deleteFn) {
+      deleteFn(id);
+    }
+  };
+
+  // 編集内容の保存処理
+  const handleUpdateSubmit = (e) => {
+    e.preventDefault();
+    if (!editingItem) return;
+
+    if (onUpdateExpense) {
+      onUpdateExpense(editingItem);
+    }
+    setEditingItem(null); // モーダルを閉じる
+  };
 
   // 1. 月の合計金額と楽天クレカの合計金額の計算
   const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
@@ -70,7 +93,6 @@ export default function ExpenseHistory({ expenses, onDelete }) {
                 return (
                   <li key={item.id} className="expense-history-item">
                     <div className="expense-history-details">
-                      {/* 中項目と支出元を1行で表示 */}
                       <div className="expense-history-main-row">
                         <span className="expense-history-category-main">
                           {subCategory}
@@ -79,8 +101,6 @@ export default function ExpenseHistory({ expenses, onDelete }) {
                           {paymentSource}
                         </span>
                       </div>
-
-                      {/* メモがある場合のみ、その下の行にグレー小文字で表示 */}
                       {item.memo && (
                         <div className="expense-history-memo">
                           {item.memo}
@@ -93,9 +113,20 @@ export default function ExpenseHistory({ expenses, onDelete }) {
                         ¥{Number(item.amount).toLocaleString()}
                       </span>
                       
+                      {/* 編集ボタン */}
                       <button 
                         type="button"
-                        onClick={() => onDelete(item.id)}
+                        onClick={() => setEditingItem({ ...item })}
+                        className="expense-history-edit-btn"
+                        title="編集"
+                      >
+                        ✎
+                      </button>
+
+                      {/* 削除ボタン */}
+                      <button 
+                        type="button"
+                        onClick={() => handleDelete(item.id)}
                         className="expense-history-delete-btn"
                         title="削除"
                       >
@@ -109,6 +140,59 @@ export default function ExpenseHistory({ expenses, onDelete }) {
           </div>
         );
       })}
+
+      {/* ── 編集モーダル ── */}
+      {editingItem && (
+        <div className="expense-edit-modal-overlay">
+          <div className="expense-edit-modal">
+            <h3>EDIT EXPENSE</h3>
+            <form onSubmit={handleUpdateSubmit} className="edit-form">
+              <div className="form-group">
+                <label>金額</label>
+                <input 
+                  type="number"
+                  value={editingItem.amount}
+                  onChange={(e) => setEditingItem({ ...editingItem, amount: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>日付</label>
+                <input 
+                  type="date"
+                  value={editingItem.date}
+                  onChange={(e) => setEditingItem({ ...editingItem, date: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>中項目</label>
+                <input 
+                  type="text"
+                  value={editingItem.sub_category || editingItem.subCategory || ''}
+                  onChange={(e) => setEditingItem({ ...editingItem, sub_category: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>メモ</label>
+                <input 
+                  type="text"
+                  value={editingItem.memo || ''}
+                  onChange={(e) => setEditingItem({ ...editingItem, memo: e.target.value })}
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button type="submit" className="save-btn">保存</button>
+                <button type="button" onClick={() => setEditingItem(null)} className="cancel-btn">キャンセル</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

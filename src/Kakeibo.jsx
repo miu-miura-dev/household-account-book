@@ -64,20 +64,45 @@ export default function Kakeibo() {
     }
   };
 
+  const handleUpdateExpense = async (updatedItem) => {
+    const { error } = await supabase
+      .from('expenses')
+      .update({
+        amount: Number(updatedItem.amount),
+        date: updatedItem.date,
+        sub_category: updatedItem.sub_category || updatedItem.subCategory,
+        memo: updatedItem.memo,
+      })
+      .eq('id', updatedItem.id);
+
+    if (error) {
+      console.error('データ更新エラー:', error);
+    } else {
+      fetchExpenses(); // リストを再取得
+    }
+  };
+
   return (
     <div className="kakeibo-container">
       
       {/* タブ切り替えに応じた画面表示 */}
       {activeTab === 'input' && (
         <div>
-          <ExpenseForm onAddExpense={handleAddExpense} />
+          {/* ↓ onNavigateHistory を追加 */}
+          <ExpenseForm 
+            onAddExpense={handleAddExpense} 
+            onNavigateHistory={() => setActiveTab('history')} 
+          />
         </div>
       )}
 
        {activeTab === 'history' && (
         <div>
-          <ExpenseHistory expenses={expenses} onDeleteExpense={handleDeleteExpense} />
-        </div>
+<ExpenseHistory 
+  expenses={expenses} 
+  onDeleteExpense={handleDeleteExpense} 
+  onUpdateExpense={handleUpdateExpense} 
+/>        </div>
       )}
 
       {activeTab === 'dashboard' && (
