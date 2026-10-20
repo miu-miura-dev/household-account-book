@@ -12,7 +12,7 @@ git add .
 
 # 3. コミットを作成
 
-git commit -m "feat: 予算ダッシュボードの機能実装とデザイン調整"
+git commit -m "feat: 集計期間の修正"
 
 
 

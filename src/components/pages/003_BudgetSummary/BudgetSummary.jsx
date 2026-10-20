@@ -160,13 +160,15 @@ export default function BudgetSummary({ expenses = [] }) {
     <div className="budget-summary-container">
       {/* A. ヘッダー ＆ 設定ボタン */}
       <div className="budget-header">
+        <div className="budget-header-spacer"></div>
         <h2 className="budget-title">DASHBOARD</h2>
         <button 
           type="button" 
           onClick={() => setIsEditingConfig(!isEditingConfig)}
           className={`config-toggle-btn ${isEditingConfig ? 'active' : ''}`}
         >
-          {isEditingConfig ? '設定完了' : '⚙️ 予算設定'}
+          <span>⚙️</span>
+          <span>CONFIG</span>
         </button>
       </div>
 
@@ -250,7 +252,10 @@ export default function BudgetSummary({ expenses = [] }) {
 
     {/* D. コントロールバー */}
       <div className="control-bar">
-        {/* 期間切り替えタブ */}
+        {/* 左側バランス用スペーサー */}
+        <div className="control-bar-spacer" />
+
+        {/* 期間切り替えタブ（中央に配置 & 広く） */}
         <div className="view-mode-tabs">
           <button type="button" className={`tab-btn ${viewMode === 'day' ? 'active' : ''}`} onClick={() => setViewMode('day')}>DAY</button>
           <button type="button" className={`tab-btn ${viewMode === 'week' ? 'active' : ''}`} onClick={() => setViewMode('week')}>WEEK</button>
@@ -258,14 +263,17 @@ export default function BudgetSummary({ expenses = [] }) {
         </div>
 
         {/* 繰り越し切り替えボタン */}
-        {viewMode !== 'day' && (
+        {viewMode !== 'day' ? (
           <button 
             type="button" 
             className={`carry-toggle-btn ${isCarryOver ? 'active' : ''}`}
             onClick={() => setIsCarryOver(!isCarryOver)}
           >
-            {isCarryOver ? 'CARRY: ON' : 'CARRY: OFF'}
+            <span>CARRY</span>
+            <span>{isCarryOver ? 'ON' : 'OFF'}</span>
           </button>
+        ) : (
+          <div className="control-bar-spacer" />
         )}
       </div>
 
