@@ -250,7 +250,7 @@ export default function BudgetSummary({ expenses = [] }) {
 
     {/* D. コントロールバー */}
       <div className="control-bar">
-        {/* 期間切り替えタブ（アルファベット表記） */}
+        {/* 期間切り替えタブ */}
         <div className="view-mode-tabs">
           <button type="button" className={`tab-btn ${viewMode === 'day' ? 'active' : ''}`} onClick={() => setViewMode('day')}>DAY</button>
           <button type="button" className={`tab-btn ${viewMode === 'week' ? 'active' : ''}`} onClick={() => setViewMode('week')}>WEEK</button>
@@ -271,11 +271,21 @@ export default function BudgetSummary({ expenses = [] }) {
 
       {/* E. メインサマリーカード */}
       <div className={`budget-overview-card ${balanceDiff < 0 ? 'over' : ''}`}>
-        {/* 1. 補足ラベル（経過日数など） */}
+        {/* 1. 集計期間の表示 */}
         <div className="budget-overview-label">
-          {viewMode === 'day' && `${formatDate(today)}`}
-          {viewMode === 'week' && `今週の進捗（${passedDaysInWeek} / ${totalDaysInWeek}日目）`}
-          {viewMode === 'month' && `今月の進捗（${currentDayNum} / ${totalDaysInMonth}日目）`}
+          {viewMode === 'day' && (
+            `${String(currentMonth + 1).padStart(2, '0')}/${String(currentDayNum).padStart(2, '0')}`
+          )}
+          {viewMode === 'week' && (
+            isCarryOver 
+              ? `${String(weekRange.start.getMonth() + 1).padStart(2, '0')}/${String(weekRange.start.getDate()).padStart(2, '0')} - ${String(weekRange.end.getMonth() + 1).padStart(2, '0')}/${String(weekRange.end.getDate()).padStart(2, '0')}`
+              : `${String(weekRange.start.getMonth() + 1).padStart(2, '0')}/${String(weekRange.start.getDate()).padStart(2, '0')} - ${String(currentMonth + 1).padStart(2, '0')}/${String(currentDayNum).padStart(2, '0')}`
+          )}
+          {viewMode === 'month' && (
+            isCarryOver
+              ? `${String(currentMonth + 1).padStart(2, '0')}/01 - ${String(currentMonth + 1).padStart(2, '0')}/${String(totalDaysInMonth).padStart(2, '0')}`
+              : `${String(currentMonth + 1).padStart(2, '0')}/01 - ${String(currentMonth + 1).padStart(2, '0')}/${String(currentDayNum).padStart(2, '0')}`
+          )}
         </div>
 
         {/* 2. メインの達成度金額 */}

@@ -26,4 +26,4 @@ git remote add origin https://github.com/miu-miura-dev/household-account-book.gi
 
 git branch -M main
 
-git push -u origin mainこの方法で 
+git push -u origin main
