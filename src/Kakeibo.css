@@ -25,26 +25,6 @@
   color: #444;
 }
 
-/* 右下のフローティング・プラスボタン */
-.kakeibo-fab-btn {
-  position: fixed;
-  bottom: 75px;
-  right: 20px;
-  width: 56px;
-  height: 56px;
-  background-color: #2e7d32;
-  color: #fff;
-  border: none;
-  border-radius: 50%;
-  font-size: 2rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  cursor: pointer;
-  z-index: 1001;
-}
-
 /* モーダルの背景オーバーレイ */
 .kakeibo-modal-overlay {
   position: fixed;
@@ -55,26 +35,33 @@
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
-  align-items: flex-end;
+  align-items: center; /* ← [変更] flex-end から変更して画面中央に配置し見切れを防止 */
   z-index: 2000;
   box-sizing: border-box;
+  overflow: hidden;
+  padding: 20px; /* ← [追加] スマホの端っこに密着しないように余白を確保 */
 }
 
 /* モーダルコンテンツのラッパー */
 .kakeibo-modal-content-wrapper {
   width: 100%;
   max-width: 600px;
-  max-height: 90vh;
+  max-height: 85vh; /* ← [調整] 画面内にしっかり収まるように少し縮小 */
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   position: relative;
+  background: #fff;
+  border-radius: 16px; /* ← [変更] 四隅を丸くしてカード風にすっきりと配置 */
+  padding: 24px 20px 20px 20px; /* ← [調整] 上下のパディングを綺麗に調整 */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); /* ← [追加] 浮き上がり感を出して見やすく */
 }
 
 /* モーダルの閉じるボタン（✕） */
 .kakeibo-modal-close-btn {
   position: absolute;
-  top: -40px;
+  top: 12px; /* ← [変更] マイナス値からカードの内側に変更して見切れを解消 */
   right: 16px;
-  background: #fff;
+  background: #f0f0f0; /* ← [調整] 色を少し優しく */
   border: none;
   border-radius: 50%;
   width: 32px;
@@ -82,8 +69,15 @@
   cursor: pointer;
   font-weight: bold;
   z-index: 10;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* htmlやbodyのスクロール固定を強制解除してスクロールできるようにする */
+html, body {
+  overflow: auto !important;
+  position: static !important;
+  height: auto !important;
+  min-height: 100vh;
 }

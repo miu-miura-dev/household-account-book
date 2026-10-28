@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { 
+  ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend 
+} from 'recharts';
 import { CATEGORIES } from "../../../constants/categories";
 import './BudgetSummary.css';
 
@@ -7,9 +10,9 @@ export default function BudgetSummary({ expenses = [] }) {
   // 1. ステート（状態管理）
   // ----------------------------------------------------
   const [viewMode, setViewMode] = useState('day'); // 'day' | 'week' | 'month'
-  const [isCarryOver, setIsCarryOver] = useState(true); // true: 繰り越しあり, false: 繰り越しなし
+  const [isCarryOver, setIsCarryOver] = useState(true);
   const [isEditingConfig, setIsEditingConfig] = useState(false);
-  const [showCalendarSummary, setShowCalendarSummary] = useState(false); // カレンダー集計の表示ON/OFF
+  const [showCalendarSummary, setShowCalendarSummary] = useState(false);
 
   // 月間基本予算
   const [monthlyBudgets, setMonthlyBudgets] = useState({
@@ -56,17 +59,12 @@ export default function BudgetSummary({ expenses = [] }) {
     totalDaysInWeek
   );
 
-  // カレンダー用配列 (月曜始まり)
   const firstDayOfWeek = monthStart.getDay();
   const startingEmptyDays = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
 
   const calendarCells = [];
-  for (let i = 0; i < startingEmptyDays; i++) {
-    calendarCells.push(null);
-  }
-  for (let dayNum = 1; dayNum <= totalDaysInMonth; dayNum++) {
-    calendarCells.push(dayNum);
-  }
+  for (let i = 0; i < startingEmptyDays; i++) calendarCells.push(null);
+  for (let dayNum = 1; dayNum <= totalDaysInMonth; dayNum++) calendarCells.push(dayNum);
 
   // ----------------------------------------------------
   // 3. 実際の支出データ（expenses）の期間別フィルタリング
@@ -76,30 +74,22 @@ export default function BudgetSummary({ expenses = [] }) {
     const itemDate = new Date(dateStr);
     
     if (mode === 'day') {
-      return (
-        itemDate.getFullYear() === currentYear &&
-        itemDate.getMonth() === currentMonth &&
-        itemDate.getDate() === currentDayNum
-      );
+      return itemDate.getFullYear() === currentYear && itemDate.getMonth() === currentMonth && itemDate.getDate() === currentDayNum;
     } else if (mode === 'week') {
       return itemDate >= weekRange.start && itemDate <= weekRange.end;
     } else if (mode === 'month') {
-      return (
-        itemDate.getFullYear() === currentYear &&
-        itemDate.getMonth() === currentMonth
-      );
+      return itemDate.getFullYear() === currentYear && itemDate.getMonth() === currentMonth;
     }
     return false;
   };
 
   const filteredExpenses = expenses.filter(item => isDateInPeriod(item.date, viewMode));
 
-  // 1日あたりの平均予算
   const totalMonthlyBudget = Object.values(monthlyBudgets).reduce((sum, item) => sum + item.total, 0);
   const dailyBudget = Math.round(totalMonthlyBudget / totalDaysInMonth);
   const weeklyBudget = Math.round((totalMonthlyBudget / totalDaysInMonth) * 7);
 
-  // 日付ごとの支出マップを生成
+  // 日付ごとの支出マップ
   const dailySpentMap = {};
   expenses.forEach(item => {
     if (!item.date) return;
@@ -110,27 +100,69 @@ export default function BudgetSummary({ expenses = [] }) {
     }
   });
 
-  // 月間支出合計
   const monthTotalSpent = Object.values(dailySpentMap).reduce((sum, val) => sum + val, 0);
   const monthTotalDiff = totalMonthlyBudget - monthTotalSpent;
 
-  // カレンダーを週ごとの行に分割（週集計の計算用）
+  // ----------------------------------------------------
+  // 4. グラフデータ生成（モード連動）
+  // ----------------------------------------------------
+  const getChartData = () => {
+    const data = [];
+
+    if (viewMode === 'day') {
+      const daySpent = dailySpentMap[currentDayNum] || 0;
+      data.push({
+        label: `${currentMonth + 1}/${currentDayNum} (今日)`,
+        "実際の支出": daySpent,
+        "1日予算": dailyBudget,
+      });
+    } else if (viewMode === 'week') {
+      const startDayNum = weekRange.start.getDate();
+      const endDayNum = Math.min(weekRange.end.getDate(), totalDaysInMonth);
+      let weekRunning = 0;
+
+      for (let d = startDayNum; d <= endDayNum; d++) {
+        if (d > currentDayNum) break;
+        weekRunning += (dailySpentMap[d] || 0);
+        data.push({
+          label: `${d}日`,
+          "実際の支出": weekRunning,
+          "目標ペースライン": dailyBudget * (d - startDayNum + 1),
+        });
+      }
+    } else {
+      let running = 0;
+      const limitDay = isCarryOver ? totalDaysInMonth : currentDayNum;
+
+      for (let d = 1; d <= totalDaysInMonth; d++) {
+        if (d > limitDay) break;
+        running += (dailySpentMap[d] || 0);
+        const targetLine = dailyBudget * d;
+
+        data.push({
+          label: `${d}日`,
+          "実際の累積支出": running,
+          "目標ペースライン": targetLine,
+        });
+      }
+    }
+    return data;
+  };
+
+  const chartData = getChartData();
+
+  // カレンダー行分け
   const calendarRows = [];
   let currentRow = [];
   calendarCells.forEach((cell, idx) => {
     currentRow.push(cell);
     if (currentRow.length === 7 || idx === calendarCells.length - 1) {
-      while (currentRow.length < 7) {
-        currentRow.push(null);
-      }
+      while (currentRow.length < 7) currentRow.push(null);
       calendarRows.push(currentRow);
       currentRow = [];
     }
   });
 
-  // ----------------------------------------------------
-  // 4. 予算・ペース・差額の計算ロジック
-  // ----------------------------------------------------
   const handleBudgetChange = (mainCat, type, subCat = null, value = 0) => {
     const numVal = Number(value) || 0;
     setMonthlyBudgets(prev => {
@@ -148,23 +180,16 @@ export default function BudgetSummary({ expenses = [] }) {
   };
 
   let periodTotalBudget = totalMonthlyBudget;
-  if (viewMode === 'day') {
-    periodTotalBudget = dailyBudget;
-  } else if (viewMode === 'week') {
-    periodTotalBudget = Math.round((totalMonthlyBudget / totalDaysInMonth) * totalDaysInWeek);
-  }
+  if (viewMode === 'day') periodTotalBudget = dailyBudget;
+  if (viewMode === 'week') periodTotalBudget = Math.round((totalMonthlyBudget / totalDaysInMonth) * totalDaysInWeek);
 
   let targetPaceBudget = periodTotalBudget;
-  if (viewMode === 'week') {
-    targetPaceBudget = Math.round((periodTotalBudget / totalDaysInWeek) * passedDaysInWeek);
-  } else if (viewMode === 'month') {
-    targetPaceBudget = Math.round((totalMonthlyBudget / totalDaysInMonth) * currentDayNum);
-  }
+  if (viewMode === 'week') targetPaceBudget = Math.round((periodTotalBudget / totalDaysInWeek) * passedDaysInWeek);
+  if (viewMode === 'month') targetPaceBudget = Math.round((totalMonthlyBudget / totalDaysInMonth) * currentDayNum);
 
   const totalSpent = filteredExpenses.reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const comparisonBudget = isCarryOver ? periodTotalBudget : targetPaceBudget;
   const balanceDiff = comparisonBudget - totalSpent; 
-
   const spentPercentage = comparisonBudget > 0 ? Math.min(Math.round((totalSpent / comparisonBudget) * 100), 100) : 0;
   const markerPercentage = periodTotalBudget > 0 ? Math.min(Math.round((targetPaceBudget / periodTotalBudget) * 100), 100) : 0;
 
@@ -199,7 +224,6 @@ export default function BudgetSummary({ expenses = [] }) {
           {Object.keys(CATEGORIES).map((mainCat) => {
             const currentTotal = monthlyBudgets[mainCat]?.total || 0;
             const subList = CATEGORIES[mainCat] || [];
-
             return (
               <div key={mainCat} className="config-item-box">
                 <div className="config-main-row">
@@ -251,7 +275,6 @@ export default function BudgetSummary({ expenses = [] }) {
           </button>
         </div>
 
-        {/* 曜日ヘッダー */}
         <div className={`mini-calendar-grid calendar-weekdays ${showCalendarSummary ? 'show-summary' : ''}`}>
           <span className="weekday-label">月</span>
           <span className="weekday-label">火</span>
@@ -263,7 +286,6 @@ export default function BudgetSummary({ expenses = [] }) {
           {showCalendarSummary && <span className="weekday-label summary-label">週計</span>}
         </div>
 
-        {/* カレンダーグリッド */}
         <div className={`mini-calendar-grid ${showCalendarSummary ? 'show-summary' : ''}`}>
           {calendarRows.map((row, rowIndex) => {
             const weekSpent = row.reduce((sum, dayNum) => sum + (dayNum ? (dailySpentMap[dayNum] || 0) : 0), 0);
@@ -272,9 +294,7 @@ export default function BudgetSummary({ expenses = [] }) {
             return (
               <React.Fragment key={`row-${rowIndex}`}>
                 {row.map((dayNum, cellIndex) => {
-                  if (dayNum === null) {
-                    return <div key={`empty-${rowIndex}-${cellIndex}`} className="calendar-day-cell empty"></div>;
-                  }
+                  if (dayNum === null) return <div key={`empty-${rowIndex}-${cellIndex}`} className="calendar-day-cell empty"></div>;
 
                   const active = isSelectedDate(dayNum);
                   const isToday = dayNum === currentDayNum;
@@ -287,17 +307,13 @@ export default function BudgetSummary({ expenses = [] }) {
                       className={`calendar-day-cell ${active ? 'active-range' : ''} ${isToday ? 'is-today' : ''}`}
                     >
                       <span className="cell-day-num">{dayNum}</span>
-                      <span className="cell-spent-amount">
-                        {daySpent > 0 ? daySpent.toLocaleString() : '-'}
-                      </span>
+                      <span className="cell-spent-amount">{daySpent > 0 ? daySpent.toLocaleString() : '-'}</span>
                       <span className={`cell-diff-amount ${dayDiff < 0 ? 'over' : 'safe'}`}>
                         {dayDiff >= 0 ? `+${dayDiff.toLocaleString()}` : `-${Math.abs(dayDiff).toLocaleString()}`}
                       </span>
                     </div>
                   );
                 })}
-
-                {/* 集計ON時の「週計」セル（¥を除去して省スペース化） */}
                 {showCalendarSummary && (
                   <div className="calendar-day-cell week-summary-cell">
                     <span className="cell-day-num">TOT</span>
@@ -312,7 +328,7 @@ export default function BudgetSummary({ expenses = [] }) {
           })}
         </div>
 
-        {/* 集計ON時の「月合計」エリア */}
+        {/* 集計ON時の月合計エリア（アラートを削除） */}
         {showCalendarSummary && (
           <div className="calendar-month-summary-bar">
             <div className="month-summary-item">
@@ -351,22 +367,48 @@ export default function BudgetSummary({ expenses = [] }) {
         )}
       </div>
 
+      {/* グラフセクション */}
+      <div className="budget-chart-section">
+        <h3 className="chart-section-title">
+          📈 {viewMode.toUpperCase()} 支出推移 
+          <span style={{ fontSize: '0.75rem', color: '#888', fontWeight: 'normal', marginLeft: '8px' }}>
+            ({isCarryOver ? 'CARRY: ON' : 'CARRY: OFF'})
+          </span>
+        </h3>
+        <div style={{ width: '100%', height: 220 }}>
+          <ResponsiveContainer>
+            <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
+              <XAxis dataKey="label" fontSize={11} tickLine={false} />
+              <YAxis fontSize={11} tickLine={false} />
+              <Tooltip formatter={(value) => [`¥${value.toLocaleString()}`, '']} />
+              <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '5px' }} />
+              <Line 
+                type="monotone" 
+                dataKey="目標ペースライン" 
+                stroke="#52c41a" 
+                strokeWidth={2} 
+                dot={false} 
+              />
+              <Area 
+                type="monotone" 
+                dataKey={viewMode === 'day' ? "実際の支出" : "実際の累積支出"} 
+                stroke="#ff4d4f" 
+                fill="#ff4d4f" 
+                fillOpacity={0.15} 
+                strokeWidth={2} 
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
       {/* E. メインサマリーカード */}
       <div className={`budget-overview-card ${balanceDiff < 0 ? 'over' : ''}`}>
         <div className="budget-overview-label">
-          {viewMode === 'day' && (
-            `${String(currentMonth + 1).padStart(2, '0')}/${String(currentDayNum).padStart(2, '0')}`
-          )}
-          {viewMode === 'week' && (
-            isCarryOver 
-              ? `${String(weekRange.start.getMonth() + 1).padStart(2, '0')}/${String(weekRange.start.getDate()).padStart(2, '0')} - ${String(weekRange.end.getMonth() + 1).padStart(2, '0')}/${String(weekRange.end.getDate()).padStart(2, '0')}`
-              : `${String(weekRange.start.getMonth() + 1).padStart(2, '0')}/${String(weekRange.start.getDate()).padStart(2, '0')} - ${String(currentMonth + 1).padStart(2, '0')}/${String(currentDayNum).padStart(2, '0')}`
-          )}
-          {viewMode === 'month' && (
-            isCarryOver
-              ? `${String(currentMonth + 1).padStart(2, '0')}/01 - ${String(currentMonth + 1).padStart(2, '0')}/${String(totalDaysInMonth).padStart(2, '0')}`
-              : `${String(currentMonth + 1).padStart(2, '0')}/01 - ${String(currentMonth + 1).padStart(2, '0')}/${String(currentDayNum).padStart(2, '0')}`
-          )}
+          {viewMode === 'day' && (`${String(currentMonth + 1).padStart(2, '0')}/${String(currentDayNum).padStart(2, '0')}`)}
+          {viewMode === 'week' && (isCarryOver ? `${String(weekRange.start.getMonth() + 1).padStart(2, '0')}/${String(weekRange.start.getDate()).padStart(2, '0')} - ${String(weekRange.end.getMonth() + 1).padStart(2, '0')}/${String(weekRange.end.getDate()).padStart(2, '0')}` : `${String(weekRange.start.getMonth() + 1).padStart(2, '0')}/${String(weekRange.start.getDate()).padStart(2, '0')} - ${String(currentMonth + 1).padStart(2, '0')}/${String(currentDayNum).padStart(2, '0')}`)}
+          {viewMode === 'month' && (isCarryOver ? `${String(currentMonth + 1).padStart(2, '0')}/01 - ${String(currentMonth + 1).padStart(2, '0')}/${String(totalDaysInMonth).padStart(2, '0')}` : `${String(currentMonth + 1).padStart(2, '0')}/01 - ${String(currentMonth + 1).padStart(2, '0')}/${String(currentDayNum).padStart(2, '0')}`)}
         </div>
 
         <div className={`budget-overview-value ${balanceDiff < 0 ? 'text-over' : 'text-safe'}`}>
@@ -376,54 +418,21 @@ export default function BudgetSummary({ expenses = [] }) {
           }
         </div>
 
-        <div className="budget-overview-sub">
-          {isCarryOver ? (
-            <>全体予算 ¥{periodTotalBudget.toLocaleString()} / 使用額 ¥{totalSpent.toLocaleString()}</>
-          ) : (
-            <>今日時点の目標 ¥{targetPaceBudget.toLocaleString()} / 使用額 ¥{totalSpent.toLocaleString()}</>
-          )}
-        </div>
-
-        {/* 月全体の着地予測表示 */}
-        {currentDayNum > 0 && currentDayNum < totalDaysInMonth && (
-          <div className="forecast-banner">
-            {(() => {
-              const projectedTotalSpent = Math.round((monthTotalSpent / currentDayNum) * totalDaysInMonth);
-              const projectedDiff = totalMonthlyBudget - projectedTotalSpent;
-              const isProjectedOver = projectedDiff < 0;
-
-              return (
-                <span className={isProjectedOver ? 'forecast-over' : 'forecast-safe'}>
-                  🔮 月末の着地予測: 
-                  {isProjectedOver 
-                    ? ` 約 ¥${Math.abs(projectedDiff).toLocaleString()} の超過ペース` 
-                    : ` 約 ¥${projectedDiff.toLocaleString()} の節約ペース`}
-                </span>
-              );
-            })()}
-          </div>
-        )}
-
         <div className="progress-bar-bg" style={{ marginTop: '10px' }}>
-          <div 
-            className={`progress-bar-fill ${balanceDiff < 0 ? 'over' : ''}`}
-            style={{ width: `${spentPercentage}%` }}
-          ></div>
+          <div className={`progress-bar-fill ${balanceDiff < 0 ? 'over' : ''}`} style={{ width: `${spentPercentage}%` }}></div>
           {isCarryOver && viewMode !== 'day' && (
-            <div 
-              className="pace-marker"
-              style={{ left: `${markerPercentage}%` }}
-              title={`今日時点の目標ライン: ¥${targetPaceBudget.toLocaleString()}`}
-            ></div>
+            <div className="pace-marker" style={{ left: `${markerPercentage}%` }} title={`今日時点の目標ライン: ¥${targetPaceBudget.toLocaleString()}`}></div>
           )}
         </div>
       </div>
 
-      {/* F. カテゴリ別リスト ＆ 着地予測 */}
+      {/* F. カテゴリ別リスト ＆ 中項目バー（※2つ以上ある場合のみ表示） */}
       <div className="category-budget-list">
         {Object.keys(CATEGORIES).map((mainCategory) => {
           const catConfig = monthlyBudgets[mainCategory] || { total: 0, sub: {} };
           const baseMonthlyBudget = catConfig.total;
+          const subCategoryBudgets = catConfig.sub || {};
+          const subCategoryNames = CATEGORIES[mainCategory] || [];
 
           let catTotalBudget = baseMonthlyBudget;
           if (viewMode === 'day') catTotalBudget = Math.round(baseMonthlyBudget / totalDaysInMonth);
@@ -441,7 +450,6 @@ export default function BudgetSummary({ expenses = [] }) {
           const catCompareBudget = isCarryOver ? catTotalBudget : catTargetPace;
           const catDiff = catCompareBudget - spent;
           const isCatOver = catDiff < 0;
-
           const catSpentPercentage = catCompareBudget > 0 ? Math.min(Math.round((spent / catCompareBudget) * 100), 100) : 0;
 
           return (
@@ -455,42 +463,41 @@ export default function BudgetSummary({ expenses = [] }) {
               </div>
 
               <div className="progress-bar-bg">
-                <div 
-                  className={`progress-bar-fill ${isCatOver ? 'over' : ''}`}
-                  style={{ width: `${catSpentPercentage}%` }}
-                ></div>
+                <div className={`progress-bar-fill ${isCatOver ? 'over' : ''}`} style={{ width: `${catSpentPercentage}%` }}></div>
               </div>
 
-              <div className="category-pace-row">
-                <span className="pace-label">
-                  {isCarryOver ? `期間残り: ¥${(catTotalBudget - spent).toLocaleString()}` : `目標ペース: ¥${catTargetPace.toLocaleString()}`}
-                </span>
-                <span className={`pace-status ${isCatOver ? 'over' : 'safe'}`}>
-                  {isCatOver ? `⚠️ 超過 (-¥${Math.abs(catDiff).toLocaleString()})` : `✨ 節約中 (+¥${catDiff.toLocaleString()})`}
-                </span>
-              </div>
+              {/* 中項目が2つ以上ある場合のみサブカテゴリバーを表示 */}
+              {subCategoryNames.length >= 2 && (
+                <div className="sub-category-list">
+                  {subCategoryNames.map(subName => {
+                    const subBaseBudget = subCategoryBudgets[subName] || 0;
+                    let subPeriodBudget = subBaseBudget;
+                    if (viewMode === 'day') subPeriodBudget = Math.round(subBaseBudget / totalDaysInMonth);
+                    if (viewMode === 'week') subPeriodBudget = Math.round((subBaseBudget / totalDaysInMonth) * totalDaysInWeek);
 
-              {/* ★ カテゴリ別の着地予測（超過分＋順調項目の月換算） */}
-              {currentDayNum > 0 && (
-                <div className="category-forecast-row">
-                  {(() => {
-                    const projectedCatSpent = Math.round((spent / currentDayNum) * totalDaysInMonth);
-                    const projectedCatDiff = baseMonthlyBudget - projectedCatSpent;
-                    
-                    if (isCatOver) {
-                      return (
-                        <span className="forecast-text over">
-                          ⚠️ 月換算予測: 約 ¥{projectedCatSpent.toLocaleString()} (-¥{Math.abs(projectedCatDiff).toLocaleString()} 超過)
-                        </span>
-                      );
-                    } else {
-                      return (
-                        <span className="forecast-text safe">
-                          💡 月換算予測: 約 ¥{projectedCatSpent.toLocaleString()} (+¥{projectedCatDiff.toLocaleString()} 節約見込)
-                        </span>
-                      );
-                    }
-                  })()}
+                    const subSpent = mainCategoryExpenses
+                      .filter(item => (item.subCategory || item.subcategory || item.category) === subName)
+                      .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+
+                    const subDiff = subPeriodBudget - subSpent;
+                    const isSubOver = subDiff < 0;
+                    const subPercentage = subPeriodBudget > 0 ? Math.min(Math.round((subSpent / subPeriodBudget) * 100), 100) : (subSpent > 0 ? 100 : 0);
+
+                    return (
+                      <div key={subName} className="sub-category-item">
+                        <div className="sub-category-info">
+                          <span className="sub-category-name">└ {subName}</span>
+                          <span className="sub-category-amounts">
+                            <span className={isSubOver ? 'text-over' : ''}>¥{subSpent.toLocaleString()}</span>
+                            <span className="sub-budget-text"> / ¥{subPeriodBudget.toLocaleString()}</span>
+                          </span>
+                        </div>
+                        <div className="progress-bar-bg sub-progress">
+                          <div className={`progress-bar-fill ${isSubOver ? 'over' : ''}`} style={{ width: `${subPercentage}%` }}></div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

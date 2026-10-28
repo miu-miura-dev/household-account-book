@@ -8,7 +8,6 @@ import "./Kakeibo.css";
 
 export default function Kakeibo() {
   const [expenses, setExpenses] = useState([]);
-  // 初期タブを 'input'（新規入力）に変更
   const [activeTab, setActiveTab] = useState('input');
 
   const fetchExpenses = async () => {
@@ -28,6 +27,7 @@ export default function Kakeibo() {
     fetchExpenses();
   }, []);
 
+  // 新規追加ハンドラー（is_pending を渡す）
   const handleAddExpense = async (newExpense) => {
     const payload = {
       amount: Number(newExpense.amount),
@@ -36,6 +36,8 @@ export default function Kakeibo() {
       sub_category: newExpense.subCategory || newExpense.sub_category,
       payment_source: newExpense.paymentSource || newExpense.payment_source,
       memo: newExpense.memo || '',
+      is_pending: newExpense.is_pending !== undefined ? newExpense.is_pending : true,
+      is_excluded: Boolean(newExpense.is_excluded || newExpense.isExcluded),
     };
 
     const { error } = await supabase
@@ -46,11 +48,10 @@ export default function Kakeibo() {
       console.error('データ追加エラー:', error);
     } else {
       fetchExpenses();
-      // 入力完了したら自動で「履歴」タブに切り替える
-      setActiveTab('history');
     }
   };
 
+  // 削除ハンドラー
   const handleDeleteExpense = async (id) => {
     const { error } = await supabase
       .from('expenses')
@@ -64,21 +65,28 @@ export default function Kakeibo() {
     }
   };
 
+  // 更新ハンドラー（重複を解消し、is_pending と is_excluded を正しく処理）
   const handleUpdateExpense = async (updatedItem) => {
     const { error } = await supabase
       .from('expenses')
       .update({
         amount: Number(updatedItem.amount),
         date: updatedItem.date,
+        category: updatedItem.category,
         sub_category: updatedItem.sub_category || updatedItem.subCategory,
+        payment_source: updatedItem.payment_source || updatedItem.paymentSource,
         memo: updatedItem.memo,
+        // is_pending の指定があればその値、なければ false（通常履歴化）
+        is_pending: updatedItem.is_pending !== undefined ? updatedItem.is_pending : false,
+        // 集計除外（マイナス）フラグの更新
+        is_excluded: Boolean(updatedItem.is_excluded || updatedItem.isExcluded),
       })
       .eq('id', updatedItem.id);
 
     if (error) {
       console.error('データ更新エラー:', error);
     } else {
-      fetchExpenses(); // リストを再取得
+      fetchExpenses();
     }
   };
 
@@ -88,7 +96,6 @@ export default function Kakeibo() {
       {/* タブ切り替えに応じた画面表示 */}
       {activeTab === 'input' && (
         <div>
-          {/* ↓ onNavigateHistory を追加 */}
           <ExpenseForm 
             onAddExpense={handleAddExpense} 
             onNavigateHistory={() => setActiveTab('history')} 
@@ -96,13 +103,14 @@ export default function Kakeibo() {
         </div>
       )}
 
-       {activeTab === 'history' && (
+      {activeTab === 'history' && (
         <div>
-<ExpenseHistory 
-  expenses={expenses} 
-  onDeleteExpense={handleDeleteExpense} 
-  onUpdateExpense={handleUpdateExpense} 
-/>        </div>
+          <ExpenseHistory 
+            expenses={expenses} 
+            onDeleteExpense={handleDeleteExpense} 
+            onUpdateExpense={handleUpdateExpense} 
+          />       
+        </div>
       )}
 
       {activeTab === 'dashboard' && (
@@ -110,8 +118,6 @@ export default function Kakeibo() {
           <BudgetSummary expenses={expenses} />
         </div>
       )}
-
-
 
       <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
     </div>

@@ -2,17 +2,24 @@ import React, { useState, useEffect, useRef } from 'react';
 import { CATEGORIES, PAYMENT_SOURCES } from '../../../constants/categories';
 import './ExpenseForm.css';
 
-export default function ExpenseForm({ onAddExpense, onNavigateHistory }) {
-  const [amount, setAmount] = useState('');
-  const [selectedMainCategory, setSelectedMainCategory] = useState('食費');
-  const [selectedSubCategory, setSelectedSubCategory] = useState('食費');
-  const [paymentSource, setPaymentSource] = useState('メインクレカ');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [memo, setMemo] = useState('');
+export default function ExpenseForm({ onAddExpense, onNavigateHistory, initialData, onClose }) {
+  const [amount, setAmount] = useState(initialData ? String(initialData.amount) : '');
+  const [selectedMainCategory, setSelectedMainCategory] = useState(initialData ? initialData.category : '食費');
+  const [selectedSubCategory, setSelectedSubCategory] = useState(initialData ? initialData.sub_category : '食費');
+  const [paymentSource, setPaymentSource] = useState(initialData ? initialData.payment_source : 'メインクレカ');
+  const [date, setDate] = useState(initialData ? initialData.date : new Date().toISOString().split('T')[0]);
+  const [memo, setMemo] = useState(initialData ? initialData.memo || '' : '');
+
+  // ── ★ ここに必ず isPending のステート定義が必要です！ ──
+  const [isPending, setIsPending] = useState(() => {
+    if (initialData && initialData.id !== undefined) {
+      return initialData.is_pending !== undefined ? initialData.is_pending : false;
+    }
+    return true; // 新規作成時は強制的に true（未整理）にする
+  });
 
   // 送信完了後の確認画面用ステート
   const [submittedData, setSubmittedData] = useState(null);
-
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -26,24 +33,34 @@ export default function ExpenseForm({ onAddExpense, onNavigateHistory }) {
     setSelectedSubCategory(CATEGORIES[main][0]);
   };
 
-  const handleSubmit = (e) => {
+　　const handleSubmit = (e) => {
     e.preventDefault();
     if (!amount || isNaN(amount)) return;
 
     const newExpense = {
+      // 編集時の場合は既存の id を必ず含める
+      ...(initialData && initialData.id ? { id: initialData.id } : {}),
       amount: Number(amount),
       date: date,
       category: selectedMainCategory,
       sub_category: selectedSubCategory,
       payment_source: paymentSource,
       memo: memo || null,
+      is_pending: isPending, 
     };
 
     // 親のSupabase保存処理を実行
     onAddExpense(newExpense);
 
-    // 確認画面用のデータをセット（※ここでは画面遷移の処理は一切呼び出しません）
-    setSubmittedData(newExpense);
+    // ★ 修正：編集モーダルのときだけ閉じて、新規入力のときは未整理・通常問わず確認画面をずっと表示させる
+    if (initialData) {
+      if (typeof onClose === 'function') {
+        onClose(); // 編集のときはモーダルを閉じる
+      }
+    } else {
+      // 新規作成のときは、必ず確認（プレビュー）画面にセットしてずっと表示させる
+      setSubmittedData(newExpense);
+    }
   };
 
   // 1. 続けて入力ボタン
@@ -72,6 +89,12 @@ export default function ExpenseForm({ onAddExpense, onNavigateHistory }) {
         <h2 className="success-title">支出を保存しました</h2>
         
         <div className="success-content-box">
+          <div className="success-row">
+            <span className="success-label">ステータス</span>
+            <span className="success-value" style={{ color: submittedData.is_pending ? '#e67e22' : '#27ae60', fontWeight: 'bold' }}>
+              {submittedData.is_pending ? '未整理 (Pending)' : '通常登録 (確定)'}
+            </span>
+          </div>
           <div className="success-row">
             <span className="success-label">金額</span>
             <span className="success-value amount">¥{submittedData.amount.toLocaleString()}</span>
@@ -114,7 +137,7 @@ export default function ExpenseForm({ onAddExpense, onNavigateHistory }) {
   // ── 通常の入力フォーム画面 ──
   return (
     <form onSubmit={handleSubmit} className="expense-form">
-      <h1 className="expense-form-title">NEW ENTRY</h1>
+      <h1 className="expense-form-title">{initialData ? 'EDIT EXPENSE' : 'NEW ENTRY'}</h1>
 
       {/* 金額 */}
       <div className="form-group">
@@ -123,6 +146,7 @@ export default function ExpenseForm({ onAddExpense, onNavigateHistory }) {
           <input 
             ref={inputRef}
             type="number" 
+            inputMode="numeric"
             pattern="\d*"
             value={amount} 
             onChange={(e) => setAmount(e.target.value)} 
@@ -195,7 +219,7 @@ export default function ExpenseForm({ onAddExpense, onNavigateHistory }) {
       </div>
 
       {/* メモ */}
-      <div className="form-group-last">
+      <div className="form-group">
         <label className="form-label">メモ（任意）</label>
         <input 
           type="text"
@@ -205,8 +229,19 @@ export default function ExpenseForm({ onAddExpense, onNavigateHistory }) {
         />
       </div>
 
-      <button type="submit" className="submit-btn">
-        記録する
+      {/* ★ 記録ボタンの上のPendingトグルボタン */}
+      <div className="form-group pending-toggle-group">
+        <button
+          type="button"
+          onClick={() => setIsPending(!isPending)}
+          className={`pending-toggle-btn ${isPending ? 'is-pending' : 'is-confirmed'}`}
+        >
+          {isPending ? '📌 ステータス: 未整理 (Pending) [ON]' : '📌 ステータス: 通常登録 (確定) [OFF]'}
+        </button>
+      </div>
+
+      <button type="submit" className="submit-btn" style={{ marginTop: '10px' }}>
+        {initialData ? '更新して確定する' : '記録する'}
       </button>
     </form>
   );

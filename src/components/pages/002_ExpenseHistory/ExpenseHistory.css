@@ -1,157 +1,278 @@
-/* src/components/ExpenseHistory.css */
-
+/* === 全体レイアウト === */
 .expense-history-container {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #1e293b;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* 一番上の月・決済別サマリーカード */
-.expense-summary-header {
-  background-color: #f8f9fa;
-  border: 1px solid #e9ecef;
-  padding: 12px 16px;
-  border-radius: 12px;
-  display: flex;
-  justify-content: space-around;
+/* === ヘッダー === */
+.expense-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
+  margin-bottom: 4px;
+}
+
+.expense-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+  color: #0f172a;
+  text-align: center;
+  letter-spacing: 0.05em;
+}
+
+/* === サマリーカード === */
+.expense-summary-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
 }
 
 .expense-summary-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  text-align: center;
 }
 
 .expense-summary-label {
-  font-size: 0.75rem;
-  color: #666;
+  display: block;
+  font-size: 0.7rem;
+  color: #64748b;
+  font-weight: 600;
   margin-bottom: 2px;
 }
 
 .expense-summary-value {
-  font-size: 1.1rem;
-  font-weight: bold;
-  color: #2e7d32;
-}
-
-/* 日付ごとのグループカード */
-.expense-date-group {
-  background-color: #fff;
-  padding: 14px 16px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.expense-date-heading {
-  font-size: 0.85rem;
-  font-weight: bold;
-  color: #555;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 6px;
-  margin: 0 0 8px 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.expense-date-total {
-  font-size: 0.85rem;
-  color: #333;
-  font-weight: bold;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
 }
 
 .expense-history-empty {
-  font-size: 0.85rem;
-  color: #888;
   text-align: center;
-  background-color: #fff;
-  padding: 16px;
-  border-radius: 12px;
+  color: #64748b;
+  font-size: 0.85rem;
+  padding: 30px 0;
 }
 
+/* === 日付グループ === */
+.expense-date-group {
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.expense-date-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #475569;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+}
+
+.expense-date-total {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+/* === 履歴リスト === */
 .expense-history-list {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-/* ★ 各支出項目の行の高さ・幅を強制的に固定する */
+/* 1行ごとのアイテム（重複を解消し独立した判定に固定） */
 .expense-history-item {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 48px;             /* 行の高さを固定 */
+  padding: 8px 10px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
   box-sizing: border-box;
-  padding: 4px 0;
-  border-bottom: 1px solid #f5f5f5;
-  overflow: hidden;         /* はみ出た分を隠す */
 }
 
-.expense-history-item:last-child {
-  border-bottom: none;
+/* ★ 除外されたアイテム（グレーアウト仕様） */
+.expense-history-item.excluded,
+.expense-history-item.excluded-item {
+  background-color: #f1f5f9;
+  opacity: 0.55;
+  border-style: dashed;
 }
 
-/* 左側のテキストエリア */
+.expense-history-item.excluded .expense-history-amount,
+.expense-history-item.excluded .expense-history-category-main,
+.expense-history-item.excluded-item .expense-history-amount,
+.expense-history-item.excluded-item .expense-history-category-main {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
 .expense-history-details {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  gap: 2px;
   flex: 1;
   min-width: 0;
-  padding-right: 12px;
-  height: 100%;
 }
 
-/* 中項目と支出元を1行にする */
 .expense-history-main-row {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .expense-history-category-main {
-  font-size: 0.95rem;
-  font-weight: bold;
-  color: #333;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .expense-history-payment {
-  font-size: 0.75rem;
-  color: #888;
+  font-size: 0.65rem;
+  color: #64748b;
+  background: #e2e8f0;
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 
-/* ★ メモがある場合も、行の高さを変えずに1行で省略表示する設定 */
 .expense-history-memo {
   font-size: 0.7rem;
-  color: #888;
+  color: #64748b;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* 右側の金額と削除ボタン */
+/* 右側（金額 ＆ ボタン群） */
 .expense-history-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
+  position: relative;
+  z-index: 2;
   flex-shrink: 0;
 }
 
 .expense-history-amount {
-  font-size: 0.95rem;
-  font-weight: bold;
-  color: #2e7d32;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  margin-right: 2px;
 }
 
+/* 各種ボタンのタップ範囲調整（判定のズレ・重なりを防止） */
+.expense-history-right button,
+.expense-history-exclude-btn,
+.expense-history-edit-btn,
 .expense-history-delete-btn {
-  background-color: transparent;
-  border: none;
-  color: #c62828;
+  position: relative;
+  z-index: 3;
+  touch-action: manipulation; /* スマホでのズームやタップの遅延・ズレを防止 */
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 0.85rem;
-  padding: 2px 4px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.expense-history-right button:active {
+  transform: scale(0.96);
+}
+
+/* 除外ボタン */
+.expense-history-exclude-btn,
+.exclude-toggle-btn {
+  background: #ffffff;
+}
+
+.exclude-toggle-btn.active {
+  background-color: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+}
+
+/* 削除ボタンのホバー/アクティブ時 */
+.expense-history-delete-btn:hover {
+  background-color: #fee2e2 !important;
+  color: #dc2626 !important;
+  border-color: #fca5a5 !important;
+}
+
+/* === 編集モーダル・ボトムシート === */
+.bottom-sheet-overlay,
+.expense-edit-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.bottom-sheet-content {
+  width: 100%;
+  max-width: 500px;
+  background-color: #ffffff;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  padding: 20px;
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease-out;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.modal-close-icon {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #888;
+  cursor: pointer;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
