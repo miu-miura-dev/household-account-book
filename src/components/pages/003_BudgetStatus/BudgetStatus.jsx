@@ -3,7 +3,7 @@ import {
   ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend 
 } from 'recharts';
 import { CATEGORIES } from "../../../constants/categories";
-import './BudgetSummary.css';
+import './BudgetStatus.css';
 
 export default function BudgetSummary({ expenses = [] }) {
   // ----------------------------------------------------

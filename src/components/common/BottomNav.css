@@ -1,30 +1,50 @@
 .bottom-nav {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 80px;
-  background-color: #fff;
-  border-top: 1px solid #e0e0e0;
+  bottom: 20px;
+  left: 16px;
+  right: 16px;
+  max-width: 500px;
+  margin: 0 auto;
+  
+  background-color: #ffffff;
+  height: 64px;               /* 高さを少しコンパクトに */
   display: flex;
   justify-content: space-around;
   align-items: center;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
-  z-index: 1000; /* 他の要素の下に隠れないようにする */
+  
+  padding: 4px 6px;           /* 左右の余白を詰める */
+  border-radius: 32px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 1000;
 }
 
-.nav-item {
+.bottom-nav .nav-item {
   background: none;
   border: none;
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-size: 0.7rem;
-  color: #666;
+  padding: 4px 2px;           /* パディングを狭くして文字が入るようにする */
+  font-size: 10px;            /* 文字サイズを10pxに微調整 */
+  white-space: nowrap;        /* 絶対に改行させない */
+  color: #8e8e93;
   cursor: pointer;
+  flex: 1;                    /* 均等に幅を割り振る */
+  transition: all 0.2s ease;
 }
 
-.nav-item.active {
-  color: #2e7d32; /* 選択中の色 */
+.bottom-nav .nav-icon {
+  width: 20px;                /* アイコンサイズを少し小さく調整 (24px -> 20px) */
+  height: 20px;
+  object-fit: contain;
+  margin-bottom: 2px;
+}
+
+.bottom-nav .nav-item.active {
+  color: #10b981;
   font-weight: bold;
+}
+
+.bottom-nav .nav-item.active .nav-icon {
+  transform: scale(1.05);
 }

@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import ExpenseForm from "./components/pages/001_ExpenseForm/ExpenseForm";
 import ExpenseHistory from "./components/pages/002_ExpenseHistory/ExpenseHistory";
-import BudgetSummary from "./components/pages/003_BudgetSummary/BudgetSummary";
+import BudgetStatus from "./components/pages/003_BudgetStatus/BudgetStatus";
+import AssetOverview from "./components/pages/004_AssetOverview/AssetOverview";
+import MonthlySummary from "./components/pages/005_MonthlySummary/MonthlySummary";
+//import LoanManagement from "./components/pages/006_LoanManagement/LoanManagement";
 import BottomNav from "./components/common/BottomNav";
 import { supabase } from "./supabase";
 import "./Kakeibo.css";
@@ -27,7 +30,7 @@ export default function Kakeibo() {
     fetchExpenses();
   }, []);
 
-  // 新規追加ハンドラー（is_pending を渡す）
+  // 新規追加ハンドラー
   const handleAddExpense = async (newExpense) => {
     const payload = {
       amount: Number(newExpense.amount),
@@ -65,7 +68,7 @@ export default function Kakeibo() {
     }
   };
 
-  // 更新ハンドラー（重複を解消し、is_pending と is_excluded を正しく処理）
+  // 更新ハンドラー
   const handleUpdateExpense = async (updatedItem) => {
     const { error } = await supabase
       .from('expenses')
@@ -76,9 +79,7 @@ export default function Kakeibo() {
         sub_category: updatedItem.sub_category || updatedItem.subCategory,
         payment_source: updatedItem.payment_source || updatedItem.paymentSource,
         memo: updatedItem.memo,
-        // is_pending の指定があればその値、なければ false（通常履歴化）
         is_pending: updatedItem.is_pending !== undefined ? updatedItem.is_pending : false,
-        // 集計除外（マイナス）フラグの更新
         is_excluded: Boolean(updatedItem.is_excluded || updatedItem.isExcluded),
       })
       .eq('id', updatedItem.id);
@@ -92,8 +93,8 @@ export default function Kakeibo() {
 
   return (
     <div className="kakeibo-container">
-      
-      {/* タブ切り替えに応じた画面表示 */}
+
+      {/* 1. 入力 */}
       {activeTab === 'input' && (
         <div>
           <ExpenseForm 
@@ -103,23 +104,47 @@ export default function Kakeibo() {
         </div>
       )}
 
+      {/* 2. 履歴 */}
       {activeTab === 'history' && (
         <div>
           <ExpenseHistory 
             expenses={expenses} 
             onDeleteExpense={handleDeleteExpense} 
             onUpdateExpense={handleUpdateExpense} 
-          />       
+          />      
         </div>
       )}
 
-      {activeTab === 'dashboard' && (
+      {/* 3. 予算残高 */}
+      {activeTab === 'budgetStatus' && (
         <div>
-          <BudgetSummary expenses={expenses} />
+          <BudgetStatus expenses={expenses} />
+        </div>
+      )}
+
+      {/* 4. 資産一覧 */}
+      {activeTab === 'assetOverview' && (
+        <div>
+          <AssetOverview expenses={expenses} />
+        </div>
+      )}
+
+      {/* 5. 月間収支 */}
+      {activeTab === 'monthlySummary' && (
+        <div>
+          <MonthlySummary expenses={expenses} />
+        </div>
+      )}
+
+      {/* 6. ローン管理 */}
+      {activeTab === 'loanManagement' && (
+        <div>
+          <LoanManagement expenses={expenses} />
         </div>
       )}
 
       <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+
     </div>
   );
 }
