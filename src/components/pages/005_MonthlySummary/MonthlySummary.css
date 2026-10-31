@@ -1,179 +1,325 @@
 .monthly-summary-container {
-  padding: 16px;
-  max-width: 390px; /* iPhone 13 Pro 幅対応 */
+  padding: 12px;
+  max-width: 390px;
   margin: 0 auto;
-  padding-bottom: 80px; /* ボトムナビゲーション用の余白 */
+  padding-bottom: 90px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #1e293b;
+  background-color: #f8fafc;
+  min-height: 100vh;
 }
 
-.top-bar {
+/* トップバー */
+.top-nav-bar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 12px;
+}
+
+.month-nav-btn {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  font-weight: bold;
 }
 
 .month-picker-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 20px;
+  padding: 2px 10px;
+}
+
+.month-input-clean {
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
   font-weight: bold;
-  font-size: 0.9rem;
-}
-
-.month-input {
-  padding: 6px 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 0.9rem;
-}
-
-.setting-open-btn {
-  background-color: #f0f2f5;
-  border: 1px solid #ccc;
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 0.8rem;
+  background: transparent;
   cursor: pointer;
 }
 
-.page-title {
-  font-size: 1.1rem;
-  margin-bottom: 12px;
-  color: #333;
-}
-
-.table-column-header {
-  display: grid;
-  grid-template-columns: 2.2fr 1.4fr 1.4fr;
-  padding: 8px 10px;
-  background-color: #4a5568;
-  color: #fff;
+.setting-open-pill-btn {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  padding: 6px 10px;
+  border-radius: 16px;
   font-size: 0.75rem;
   font-weight: bold;
-  border-radius: 6px 6px 0 0;
-  text-align: center;
+  cursor: pointer;
 }
 
-.sections-container {
+/* 今月の収支オーバービューボックス */
+.summary-overview-box {
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.overview-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+}
+
+.overview-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.ov-card {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 8px;
+  border: 1px solid #f1f5f9;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 4px;
 }
 
-.summary-section {
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-/* 背景色設定 (画像のカラーイメージ準拠) */
-.bg-carryover { background-color: #fef9c3; } /* 黄色系 */
-.bg-income { background-color: #fbcfe8; }    /* ピンク系 */
-.bg-expense { background-color: #dbeafe; }   /* 水色系 */
-
-.section-header-badge {
-  padding: 6px 10px;
+.ov-card-title {
+  font-size: 0.75rem;
+  color: #64748b;
   font-weight: bold;
-  font-size: 0.85rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.summary-row {
-  display: grid;
-  grid-template-columns: 2.2fr 1.4fr 1.4fr;
+.ov-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #475569;
+}
+
+.text-expense { color: #dc2626; font-weight: bold; }
+.text-minus { color: #dc2626; font-weight: bold; }
+.text-plus { color: #16a34a; font-weight: bold; }
+
+.net-balance-banner {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  padding: 6px 8px;
-  border-bottom: 1px dashed rgba(0, 0, 0, 0.1);
+}
+
+.banner-label {
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #047857;
+}
+
+.banner-val {
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+/* アコーディオンセクション */
+.accordion-sections-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.accordion-section-card {
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+
+/* セクションカラーアクセント */
+.sec-carryover { border-left: 4px solid #eab308; }
+.sec-income { border-left: 4px solid #ec4899; }
+.sec-expense { border-left: 4px solid #3b82f6; }
+.sec-borrow { border-left: 4px solid #10b981; }
+.sec-savings { border-left: 4px solid #f97316; }
+.sec-carryforward { border-left: 4px solid #94a3b8; }
+
+.sec-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: #fff;
+  cursor: pointer;
+  user-select: none;
+}
+
+.sec-title-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sec-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #cbd5e1;
+}
+.sec-carryover .sec-dot { background: #eab308; }
+.sec-income .sec-dot { background: #ec4899; }
+.sec-expense .sec-dot { background: #3b82f6; }
+.sec-borrow .sec-dot { background: #10b981; }
+.sec-savings .sec-dot { background: #f97316; }
+.sec-carryforward .sec-dot { background: #94a3b8; }
+
+.sec-name {
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+/* ★ ここを修正：予定と実績の金額の間に余白（スペース）を持たせる */
+.sec-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.sec-total-amount {
+  display: flex;
+  gap: 10px; /* 金額同士の間隔 */
+}
+
+.arrow-icon {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  transition: transform 0.2s;
+}
+.arrow-icon.open {
+  transform: rotate(180deg);
+}
+
+.sec-body {
+  padding: 0 12px 10px 12px;
+  border-top: 1px solid #f1f5f9;
+  background: #fafaf9;
+}
+
+.table-col-labels {
+  display: grid;
+  grid-template-columns: 1.6fr 1.2fr 1.2fr;
+  font-size: 0.7rem;
+  color: #64748b;
+  padding: 6px 0;
+  border-bottom: 1px dashed #e2e8f0;
+  margin-bottom: 6px;
+  text-align: right;
+}
+.table-col-labels span:first-child {
+  text-align: left;
+}
+
+.item-row {
+  display: grid;
+  grid-template-columns: 1.6fr 1.2fr 1.2fr;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #f1f5f9;
   font-size: 0.8rem;
 }
 
-.summary-row:last-child {
-  border-bottom: none;
+.item-row.indented {
+  padding-left: 8px;
+  background: #fff;
+  border-radius: 4px;
+  margin-bottom: 2px;
 }
 
-.row-labels {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.main-label {
-  color: #666;
+.item-label-text {
   font-size: 0.75rem;
+  color: #334155;
 }
 
-.sub-label {
-  font-weight: 500;
-}
-
-.highlight-red {
-  color: #e53e3e;
-}
-
-.input-cell {
+.input-cell-box {
   display: flex;
   align-items: center;
-  background-color: #fff;
-  border: 1px solid #ccc;
+  background: #fff;
+  border: 1px solid #cbd5e1;
   border-radius: 4px;
   padding: 2px 4px;
-}
-
-.input-cell .unit {
   font-size: 0.75rem;
-  color: #888;
-  margin-right: 2px;
+  width: 85px;
+  justify-self: end;
 }
 
-.input-cell input {
+.input-cell-box input {
   width: 100%;
   border: none;
   outline: none;
+  text-align: right;
   font-size: 0.8rem;
-  text-align: right;
 }
 
-.actual-cell {
+.actual-val-text {
   text-align: right;
   font-weight: bold;
-  padding-right: 4px;
+  font-size: 0.8rem;
 }
 
-/* 借入・預金・繰り越しフッター */
-.summary-footer-box {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.footer-row {
-  display: grid;
-  grid-template-columns: 2.2fr 1.4fr 1.4fr;
-  padding: 8px 10px;
+/* グループヘッダー（固定費・変動費など） */
+.group-wrapper {
+  margin-top: 6px;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
-  font-size: 0.85rem;
-  font-weight: bold;
-  align-items: center;
+  overflow: hidden;
+  background: #f1f5f9;
 }
 
-.bg-borrow { background-color: #dcfce7; }        /* 緑系 */
-.bg-savings { background-color: #ffedd5; }       /* 薄オレンジ */
-.bg-carryover-final { background-color: #fef08a; } /* 濃い黄色 */
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  background: #e2e8f0;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
 
-.footer-val-planned, .footer-val-actual {
-  text-align: right;
+.group-title-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #475569;
+}
+
+/* ★ グループ側の金額の余白・レイアウト調整 */
+.group-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #475569;
+}
+
+.group-sub-total {
+  display: flex;
+  gap: 8px;
 }
 
 /* モーダルスタイル */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -218,7 +364,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 
 .modal-input-wrap {
@@ -227,7 +373,7 @@
   border: 1px solid #ccc;
   border-radius: 4px;
   padding: 2px 6px;
-  width: 100px;
+  width: 90px;
 }
 
 .modal-input-wrap input {
@@ -244,77 +390,19 @@
 
 .save-btn {
   flex: 1;
-  background-color: #3182ce;
+  background-color: #3b82f6;
   color: white;
   border: none;
   padding: 8px;
   border-radius: 6px;
   font-weight: bold;
+  cursor: pointer;
 }
 
 .cancel-btn {
-  background-color: #edf2f7;
+  background-color: #f1f5f9;
   border: none;
   padding: 8px 12px;
   border-radius: 6px;
-}
-
-/* 上部サマリーカードのスタイル */
-.summary-cards-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-.summary-card {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-.summary-card.plus-card {
-  border-left: 4px solid #38a169;
-}
-
-.summary-card.minus-card {
-  border-left: 4px solid #e53e3e;
-}
-
-.sc-label {
-  font-size: 0.75rem;
-  color: #64748b;
-  font-weight: bold;
-}
-
-.sc-val {
-  font-size: 0.85rem;
-  font-weight: bold;
-  color: #1e293b;
-}
-
-.sc-val.actual {
-  color: #2b6cb0;
-}
-
-.sc-val.expense {
-  color: #c53030;
-}
-
-/* 各セクションの合計行のスタイル */
-.section-total-row {
-  background-color: rgba(0, 0, 0, 0.03);
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-  font-weight: bold;
-}
-
-.total-planned-cell {
-  text-align: right;
-  padding-right: 4px;
-  font-size: 0.8rem;
+  cursor: pointer;
 }

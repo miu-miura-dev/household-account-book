@@ -1,313 +1,201 @@
-/* ── 全体レイアウト ── */
-.fixed-budget-container {
-  padding: 12px 16px;
-  width: 100%;
-  box-sizing: border-box;
+.asset-overview-container {
+  padding: 12px;
+  max-width: 390px;
+  margin: 0 auto;
+  padding-bottom: 90px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  color: #1a202c;
-  padding-bottom: 80px; /* ボトムナビの被り防止 */
+  color: #1e293b;
+  background-color: #f8fafc;
+  min-height: 100vh;
 }
 
-/* ── ヘッダー ── */
-.budget-header {
+.page-title {
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+  color: #333;
+  font-weight: bold;
+}
+
+.grand-total-card {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: #fff;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
+}
+
+.gt-label {
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+.gt-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.sources-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.source-accordion-card {
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+
+.source-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
-}
-
-.budget-title {
-  font-size: 15px;
-  font-weight: 800;
-  margin: 0;
-  color: #0f172a;
-}
-
-.fixed-setting-btn {
-  background-color: #3182ce;
-  color: #ffffff;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity 0.15s ease;
-}
-
-.fixed-setting-btn:active {
-  opacity: 0.85;
-}
-
-/* ── サマリーカード ── */
-.budget-summary-cards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.budget-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
   padding: 10px 12px;
+  background: #fff;
+  cursor: pointer;
+  user-select: none;
+}
+
+.source-title-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.source-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3b82f6;
+}
+
+.source-name {
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.item-count {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.source-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.arrow-icon {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  transition: transform 0.2s;
+}
+
+.arrow-icon.open {
+  transform: rotate(180deg);
+}
+
+.source-body {
+  padding: 8px 10px;
+  border-top: 1px solid #f1f5f9;
+  background: #f8fafc;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.no-data {
+  font-size: 0.75rem;
+  color: #94a3b8;
   text-align: center;
+  padding: 12px 0;
 }
 
-.card-label {
-  display: block;
-  font-size: 11px;
-  color: #64748b;
-  font-weight: 600;
-  margin-bottom: 2px;
+/* 日付グループブロック */
+.date-group-block {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.01);
 }
 
-.card-value {
-  font-size: 16px;
-  font-weight: 800;
-  color: #0f172a;
+.date-group-header {
+  background: #edf2f7;
+  padding: 6px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #334155;
+  border-bottom: 1px solid #e2e8f0;
 }
 
-.card-value.actual {
-  color: #2b6cb0;
+.dg-date {
+  color: #1e293b;
 }
 
-/* ── テーブル風リスト ── */
-.budget-table {
+.dg-total {
+  color: #0284c7;
+}
+
+.date-group-items {
   display: flex;
   flex-direction: column;
-  gap: 6px;
 }
 
-.budget-table-header {
-  display: grid;
-  grid-template-columns: 1.2fr 1.3fr 1fr;
-  padding: 6px 8px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #64748b;
-  background-color: #f1f5f9;
-  border-radius: 6px;
-}
-
-.text-right {
-  text-align: right;
-}
-
-.budget-table-body {
+/* 個別の明細行 */
+.expense-item-row {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.budget-row {
-  display: grid;
-  grid-template-columns: 1.2fr 1.3fr 1fr;
+  justify-content: space-between;
   align-items: center;
   padding: 8px 10px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  gap: 6px;
+  background: #fff;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.75rem;
 }
 
-.budget-row.over-budget {
-  border-color: #feb2b2;
-  background-color: #fff5f5;
+.date-group-items .expense-item-row:last-child {
+  border-bottom: none;
 }
 
-.item-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: #1e293b;
-  white-space: nowrap;
+.item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 80px;
+}
+
+.item-category {
+  font-weight: bold;
+  color: #334155;
+  font-size: 0.8rem;
+}
+
+.item-memo {
+  color: #64748b;
+  flex: 1;
+  padding: 0 8px;
   overflow: hidden;
+  text-align: left;
+  white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-/* 入力エリア */
-.planned-input-wrapper {
-  display: flex;
-  align-items: center;
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  padding: 2px 6px;
-}
-
-.currency-unit {
-  font-size: 11px;
-  color: #64748b;
-  margin-right: 2px;
-}
-
-.planned-input {
-  width: 100%;
-  border: none;
-  background: transparent;
-  font-size: 13px !important;
-  font-weight: 700;
-  color: #0f172a;
-  outline: none;
-  padding: 2px 0;
-}
-
-/* 実績表示 */
-.actual-amount-wrapper {
+.item-amount {
+  font-weight: bold;
+  color: #1e293b;
+  min-width: 60px;
   text-align: right;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-
-.actual-amount {
-  font-size: 13px;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.actual-amount.over {
-  color: #e53e3e;
-}
-
-.over-badge {
-  font-size: 9px;
-  font-weight: bold;
-  background-color: #e53e3e;
-  color: #ffffff;
-  padding: 1px 4px;
-  border-radius: 3px;
-  margin-top: 1px;
-}
-
-/* ── モーダル ── */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(15, 23, 42, 0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  padding: 16px;
-  box-sizing: border-box;
-}
-
-.modal-content {
-  background: #ffffff;
-  width: 100%;
-  max-width: 380px;
-  border-radius: 12px;
-  padding: 16px;
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.modal-header h3 {
-  font-size: 14px;
-  font-weight: 800;
-  margin: 0;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 16px;
-  color: #a0aec0;
-  cursor: pointer;
-}
-
-.modal-form {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.modal-inputs-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  overflow-y: auto;
-  max-height: 50vh;
-  padding-right: 4px;
-  margin-bottom: 12px;
-}
-
-.modal-input-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.modal-input-row label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #4a5568;
-}
-
-.modal-input-wrapper {
-  display: flex;
-  align-items: center;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  padding: 4px 8px;
-  width: 120px;
-  background: #f8fafc;
-}
-
-.modal-input-wrapper span {
-  font-size: 12px;
-  color: #718096;
-  margin-right: 4px;
-}
-
-.modal-input-wrapper input {
-  width: 100%;
-  border: none;
-  background: transparent;
-  font-size: 13px !important;
-  font-weight: bold;
-  outline: none;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.save-btn {
-  flex: 1;
-  background-color: #0f172a;
-  color: #ffffff;
-  border: none;
-  padding: 10px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.cancel-btn {
-  flex: 1;
-  background-color: #f1f5f9;
-  color: #475569;
-  border: 1px solid #cbd5e1;
-  padding: 10px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: bold;
-  cursor: pointer;
+  font-size: 0.8rem;
 }
