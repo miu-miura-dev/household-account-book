@@ -1,0 +1,347 @@
+/* ── コンテナ・全体レイアウト ── */
+.loan-management-container {
+  padding: 12px;
+  max-width: 390px;
+  margin: 0 auto;
+  padding-bottom: 90px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #1e293b;
+  background-color: #f8fafc;
+  min-height: 100vh;
+}
+
+/* ── ページトップヘッダー ── */
+.top-header-area {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.page-title {
+  font-size: 0.95rem;
+  color: #333;
+  font-weight: bold;
+  margin: 0;
+}
+
+.add-loan-btn {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-loan-btn:active {
+  background: #dbeafe;
+}
+
+/* ── タブナビゲーション ── */
+.loan-tabs-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  margin-bottom: 12px;
+  padding-bottom: 2px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.loan-tab {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #64748b;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.loan-tab.active {
+  background: #3b82f6;
+  color: #fff;
+  border-color: #3b82f6;
+}
+
+.loan-tab.settings-tab {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.loan-tab.settings-tab.active {
+  background: #0f172a;
+  color: #fff;
+  border-color: #0f172a;
+}
+
+/* ── メインカードセクション ── */
+.section-card {
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  padding: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.section-heading {
+  font-size: 0.85rem;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #1e293b;
+}
+
+.loan-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.payoff-badge {
+  display: inline-block;
+  background: #ecfdf5;
+  color: #047857;
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: bold;
+  border: 1px solid #a7f3d0;
+  margin-top: 2px;
+}
+
+.edit-config-btn,
+.jump-settings-btn {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: #334155;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* ── 折れ線グラフ (SVG) エリア ── */
+.chart-svg-scroll {
+  width: 100%;
+  overflow-x: auto;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 14px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.svg-chart {
+  display: block;
+}
+
+/* ── スクロールテーブル ── */
+.table-scroll-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.loan-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.loan-table th,
+.loan-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #f1f5f9;
+  text-align: right;
+}
+
+.loan-table th:first-child,
+.loan-table td:first-child {
+  text-align: left;
+  position: sticky;
+  left: 0;
+  background: #fff;
+  z-index: 1;
+  font-weight: bold;
+}
+
+.loan-table th {
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.val-cell.minus {
+  color: #dc2626;
+}
+
+.val-cell.bold {
+  font-weight: bold;
+}
+
+.val-cell.interest {
+  color: #d97706;
+}
+
+.val-cell.actual-highlight {
+  color: #059669;
+  font-weight: bold;
+  background: #f0fdf4;
+}
+
+.total-summary-row {
+  background: #f8fafc;
+}
+
+/* ── ページ内設定・編集エリア ── */
+.settings-desc {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-bottom: 12px;
+}
+
+.settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.setting-card-item {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.setting-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 6px;
+}
+
+.setting-card-header h4 {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #334155;
+  margin: 0;
+}
+
+.delete-btn {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.setting-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+/* ── 共通フォームスタイル ── */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.form-group label {
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: #475569;
+}
+
+.form-group input {
+  padding: 5px 6px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  outline: none;
+  background: #fff;
+  color: #1e293b;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+  border-color: #3b82f6;
+}
+
+/* ── モーダルウィンドウ ── */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  width: 90%;
+  max-width: 340px;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.config-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.save-btn {
+  width: 100%;
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 6px;
+  font-size: 0.8rem;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  color: #64748b;
+  cursor: pointer;
+}
+
+/* ── 汎用マージン ── */
+.mt-4 {
+  margin-top: 16px;
+}

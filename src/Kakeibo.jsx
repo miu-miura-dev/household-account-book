@@ -4,7 +4,7 @@ import ExpenseHistory from "./components/pages/002_ExpenseHistory/ExpenseHistory
 import BudgetStatus from "./components/pages/003_BudgetStatus/BudgetStatus";
 import AssetOverview from "./components/pages/004_AssetOverview/AssetOverview";
 import MonthlySummary from "./components/pages/005_MonthlySummary/MonthlySummary";
-//import LoanManagement from "./components/pages/006_LoanManagement/LoanManagement";
+import LoanManagement from "./components/pages/006_LoanManagement/LoanManagement";
 import BottomNav from "./components/common/BottomNav";
 import { supabase } from "./supabase";
 import "./Kakeibo.css";

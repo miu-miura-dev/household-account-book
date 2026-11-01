@@ -18,3 +18,10 @@ git remote add origin https://github.com/miu-miura-dev/household-account-book.gi
 
 git branch -M main
 git push -u origin main
+
+
+＃ 最新取得
+
+git pull origin main
+npm install
+npm run dev
