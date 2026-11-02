@@ -114,15 +114,8 @@ export default function MonthlySummary({ expenses = [] }) {
   const [openSections, setOpenSections] = useState({ carryover: true, income: true, expense: true, borrow: true, savings: true, carryforward: true });
   const [openGroups, setOpenGroups] = useState({ 'income_給与関連': true, 'income_その他収入': true, 'expense_固定費': true, 'expense_変動費': true, 'expense_その他支出': true });
 
-  const [customIncomeItems, setCustomIncomeItems] = useState(() => {
-    const saved = localStorage.getItem('kakeibo_custom_income_items');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [customExpenseItems, setCustomExpenseItems] = useState(() => {
-    const saved = localStorage.getItem('kakeibo_custom_expense_items');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [customIncomeItems, setCustomIncomeItems] = useState([]);
+  const [customExpenseItems, setCustomExpenseItems] = useState([]);
 
   const [plannedBudgets, setPlannedBudgets] = useState({});
   const [defaultPlanned, setDefaultPlanned] = useState({});
@@ -137,7 +130,24 @@ export default function MonthlySummary({ expenses = [] }) {
 
   const [isSettingOpen, setIsSettingOpen] = useState(false);
 
-  // ── Supabaseからデータ同期 ──
+  // ── ① Supabaseからカスタム項目を読み込む ──
+  const fetchCustomItems = async () => {
+    try {
+      const { data, error } = await supabase.from('custom_summary_items').select('*');
+      if (!error && data) {
+        setCustomIncomeItems(data.filter(i => i.type === 'income').map(i => ({ id: i.id, label: i.label, main: '収入', sub: i.sub_category })));
+        setCustomExpenseItems(data.filter(i => i.type === 'expense').map(i => ({ id: i.id, label: i.label, main: '', sub: i.sub_category })));
+        return;
+      }
+    } catch (e) {}
+
+    const savedInc = localStorage.getItem('kakeibo_custom_income_items');
+    if (savedInc) setCustomIncomeItems(JSON.parse(savedInc));
+    const savedExp = localStorage.getItem('kakeibo_custom_expense_items');
+    if (savedExp) setCustomExpenseItems(JSON.parse(savedExp));
+  };
+
+  // ── ② Supabaseから予定金額を読み込む ──
   const fetchAllPlans = async () => {
     try {
       const { data, error } = await supabase.from('monthly_plans').select('*');
@@ -162,19 +172,20 @@ export default function MonthlySummary({ expenses = [] }) {
       }
     } catch (e) {}
 
-    // フォールバック（LocalStorage）
     const savedDef = localStorage.getItem('kakeibo_default_monthly_planned');
     if (savedDef) setDefaultPlanned(JSON.parse(savedDef));
-
     const savedMonth = localStorage.getItem(`kakeibo_planned_${selectedMonth}`);
     if (savedMonth) setPlannedBudgets(JSON.parse(savedMonth));
   };
 
   useEffect(() => {
+    fetchCustomItems();
+  }, []);
+
+  useEffect(() => {
     fetchAllPlans();
   }, [selectedMonth]);
 
-  // 各項目の予定金額を取得（個別手入力があればそれを優先、なければ設定のデフォルト値を使用）
   const getPlannedValue = (id) => {
     if (plannedBudgets[id] !== undefined && plannedBudgets[id] !== '') {
       return plannedBudgets[id];
@@ -219,7 +230,8 @@ export default function MonthlySummary({ expenses = [] }) {
     }
   };
 
-  const handleAddCustomCategory = (e, type) => {
+  // ── ③ カスタム項目をSupabaseに保存 ──
+  const handleAddCustomCategory = async (e, type) => {
     e.preventDefault();
     const label = type === 'income' ? newIncomeLabel : newExpenseLabel;
     const sub = type === 'income' ? newIncomeSub : newExpenseSub;
@@ -244,9 +256,18 @@ export default function MonthlySummary({ expenses = [] }) {
       setNewExpenseSub('');
       setIsAddExpenseModalOpen(false);
     }
+
+    try {
+      await supabase.from('custom_summary_items').insert({
+        id: uniqueId,
+        type: type,
+        label: label.trim(),
+        sub_category: subCat
+      });
+    } catch (err) {}
   };
 
-  const handleDeleteCustomCategory = (id, type) => {
+  const handleDeleteCustomCategory = async (id, type) => {
     if (type === 'income') {
       const updated = customIncomeItems.filter(item => item.id !== id);
       setCustomIncomeItems(updated);
@@ -256,6 +277,10 @@ export default function MonthlySummary({ expenses = [] }) {
       setCustomExpenseItems(updated);
       localStorage.setItem('kakeibo_custom_expense_items', JSON.stringify(updated));
     }
+
+    try {
+      await supabase.from('custom_summary_items').delete().eq('id', id);
+    } catch (err) {}
   };
 
   const getActualAmount = (item) => {
@@ -302,13 +327,7 @@ export default function MonthlySummary({ expenses = [] }) {
   };
 
   const carryoverTotal = calcSectionTotal(SUMMARY_SECTIONS.find(s => s.id === 'carryover'));
-  const incomeSectionObj = SUMMARY_SECTIONS.find(s => s.id === 'income');
-  const incomeTotal = calcSectionTotal(incomeSectionObj);
-
-  const salaryGroupItems = incomeSectionObj.groups[0].items;
-  const salaryTotalPlanned = salaryGroupItems.reduce((s, i) => s + (Number(getPlannedValue(i.id)) || 0), 0);
-  const salaryTotalActual = salaryGroupItems.reduce((s, i) => s + getActualAmount(i), 0);
-
+  const incomeTotal = calcSectionTotal(SUMMARY_SECTIONS.find(s => s.id === 'income'));
   const expenseTotal = calcSectionTotal(SUMMARY_SECTIONS.find(s => s.id === 'expense'));
   const borrowTotal = calcSectionTotal(SUMMARY_SECTIONS.find(s => s.id === 'borrow'));
 
@@ -374,7 +393,7 @@ export default function MonthlySummary({ expenses = [] }) {
         <div className="net-balance-banner">
           <span className="banner-label">💼 今月の残高 (前月繰越+収入-支出)</span>
           <span className={`banner-val ${netBalanceActual < 0 ? 'text-minus' : 'text-plus'}`}>
-            {netBalanceActual < 0 ? `-¥${Math.abs(netBalanceActual).toLocaleString()}` : `¥{netBalanceActual.toLocaleString()}`}
+            {netBalanceActual < 0 ? `-¥${Math.abs(netBalanceActual).toLocaleString()}` : `¥${netBalanceActual.toLocaleString()}`}
           </span>
         </div>
       </div>
@@ -477,15 +496,7 @@ export default function MonthlySummary({ expenses = [] }) {
                     );
                   })}
 
-                  {sec.id === 'income' && (
-                    <div className="salary-total-banner-row">
-                      <span className="salary-total-label">💼 給与合計</span>
-                      <span className="salary-total-vals">
-                        予定: ¥{salaryTotalPlanned.toLocaleString()} / 実績: <strong>¥{salaryTotalActual.toLocaleString()}</strong>
-                      </span>
-                    </div>
-                  )}
-
+                  {/* ── その他収入 ── */}
                   {sec.id === 'income' && (() => {
                     const customGroupKey = 'income_その他収入';
                     const isCustomOpen = openGroups[customGroupKey] !== false;
@@ -552,6 +563,7 @@ export default function MonthlySummary({ expenses = [] }) {
                     );
                   })()}
 
+                  {/* ── その他支出 ── */}
                   {sec.id === 'expense' && (() => {
                     const customExpGroupKey = 'expense_その他支出';
                     const isCustomExpOpen = openGroups[customExpGroupKey] !== false;
