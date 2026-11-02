@@ -62,7 +62,7 @@ export default function BottomNav({ activeTab, setActiveTab }) {
         className={`nav-item ${activeTab === 'loanManagement' ? 'active' : ''}`}
       >
         <img src="/BottonNav/006_LoanManagement.png" alt="ローン管理" className="nav-icon" />
-        <span>ローン管理</span>
+        <span>インサイト</span>
       </button>
     </nav>
   );

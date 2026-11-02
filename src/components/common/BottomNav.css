@@ -7,7 +7,7 @@
   margin: 0 auto;
   
   background-color: #ffffff;
-  height: 64px;               /* 高さを少しコンパクトに */
+  height: 60px;               /* 高さを少しコンパクトに */
   display: flex;
   justify-content: space-around;
   align-items: center;

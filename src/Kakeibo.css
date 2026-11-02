@@ -1,83 +1,19 @@
-/* メインコンテナ */
+/* 基本コンテナ（スマホ縦幅固定） */
 .kakeibo-container {
-  padding: 30px 20px 80px 20px;
-  max-width: 600px;
-  margin: 0 auto;
-  font-family: sans-serif;
-}
-
-/* タイトル */
-.kakeibo-title {
-  font-size: 1.4rem;
-  margin-bottom: 16px;
-}
-
-/* セクション見出し */
-.kakeibo-heading-recent {
-  font-size: 1rem;
-  margin-top: 20px;
-  color: #444;
-}
-
-.kakeibo-heading-all {
-  font-size: 1rem;
-  margin-bottom: 12px;
-  color: #444;
-}
-
-/* モーダルの背景オーバーレイ */
-.kakeibo-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
   width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center; /* ← [変更] flex-end から変更して画面中央に配置し見切れを防止 */
-  z-index: 2000;
-  box-sizing: border-box;
-  overflow: hidden;
-  padding: 20px; /* ← [追加] スマホの端っこに密着しないように余白を確保 */
-}
-
-/* モーダルコンテンツのラッパー */
-.kakeibo-modal-content-wrapper {
-  width: 100%;
-  max-width: 600px;
-  max-height: 85vh; /* ← [調整] 画面内にしっかり収まるように少し縮小 */
+  height: 100Svh;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  position: relative;
-  background: #fff;
-  border-radius: 16px; /* ← [変更] 四隅を丸くしてカード風にすっきりと配置 */
-  padding: 24px 20px 20px 20px; /* ← [調整] 上下のパディングを綺麗に調整 */
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); /* ← [追加] 浮き上がり感を出して見やすく */
 }
 
-/* モーダルの閉じるボタン（✕） */
-.kakeibo-modal-close-btn {
-  position: absolute;
-  top: 12px; /* ← [変更] マイナス値からカードの内側に変更して見切れを解消 */
-  right: 16px;
-  background: #f0f0f0; /* ← [調整] 色を少し優しく */
-  border: none;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  cursor: pointer;
-  font-weight: bold;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* 6. ローン管理タブだけ幅制限を解除して画面いっぱいに */
+.kakeibo-container.tab-loanManagement {
+  max-width: 100% !important;
 }
 
-/* htmlやbodyのスクロール固定を強制解除してスクロールできるようにする */
-html, body {
-  overflow: auto !important;
-  position: static !important;
-  height: auto !important;
-  min-height: 100vh;
+/* --- 横向き（landscape）時の制御 --- */
+@media screen and (orientation: landscape) {
+
+  .bottom-nav {
+    display: none; 
+  }
 }

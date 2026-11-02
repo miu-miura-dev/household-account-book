@@ -4,21 +4,59 @@ import './ExpenseForm.css';
 
 export default function ExpenseForm({ onAddExpense, onNavigateHistory, initialData, onClose }) {
   const [amount, setAmount] = useState(initialData ? String(initialData.amount) : '');
-  const [selectedMainCategory, setSelectedMainCategory] = useState(initialData ? initialData.category : '食費');
-  const [selectedSubCategory, setSelectedSubCategory] = useState(initialData ? initialData.sub_category : '食費');
-  const [paymentSource, setPaymentSource] = useState(initialData ? initialData.payment_source : 'メインクレカ');
+  
+  // 1. 支出 / 収入
+  const [transactionType, setTransactionType] = useState(() => {
+    if (initialData && initialData.category === '収入') return 'income';
+    return 'expense';
+  });
+
+  // 2. 支出の中の分類（固定費 / 変動費）
+  const [expenseGroup, setExpenseGroup] = useState(() => {
+    if (initialData && initialData.category) {
+      if (initialData.category === '収入') return '変動費';
+      if (CATEGORIES['固定費'] && CATEGORIES['固定費'][initialData.category]) return '固定費';
+    }
+    return '変動費';
+  });
+
+  // 3. 大項目
+  const [selectedMainCategory, setSelectedMainCategory] = useState(() => {
+    if (initialData && initialData.category) return initialData.category;
+    const defaultGroupObj = CATEGORIES['変動費'] || {};
+    return Object.keys(defaultGroupObj)[0] || '';
+  });
+
+  // 4. 中項目
+  const [selectedSubCategory, setSelectedSubCategory] = useState(() => {
+    if (initialData && initialData.sub_category) return initialData.sub_category;
+    return '';
+  });
+  
+  // 「その他」などの自由入力用
+  const [customSubCategory, setCustomSubCategory] = useState(() => {
+    if (initialData && initialData.sub_category) {
+      const targetGroup = initialData.category === '収入' ? '収入' : expenseGroup;
+      const currentSubs = CATEGORIES[targetGroup]?.[initialData.category] || [];
+      if (!currentSubs.includes(initialData.sub_category)) {
+        return initialData.sub_category;
+      }
+    }
+    return '';
+  });
+
+  const [paymentSource, setPaymentSource] = useState(initialData ? initialData.payment_source : (PAYMENT_SOURCES?.[0] || '現金'));
   const [date, setDate] = useState(initialData ? initialData.date : new Date().toISOString().split('T')[0]);
   const [memo, setMemo] = useState(initialData ? initialData.memo || '' : '');
 
-  // ── ★ ここに必ず isPending のステート定義が必要です！ ──
+  // ステータス（未整理）：ボタンをやめてすっきりしたチェックボックスに変更
   const [isPending, setIsPending] = useState(() => {
     if (initialData && initialData.id !== undefined) {
       return initialData.is_pending !== undefined ? initialData.is_pending : false;
     }
-    return true; // 新規作成時は強制的に true（未整理）にする
+    return true;
   });
 
-  // 送信完了後の確認画面用ステート
   const [submittedData, setSubmittedData] = useState(null);
   const inputRef = useRef(null);
 
@@ -28,73 +66,87 @@ export default function ExpenseForm({ onAddExpense, onNavigateHistory, initialDa
     }
   }, [submittedData]);
 
-  const handleMainCategoryChange = (main) => {
-    setSelectedMainCategory(main);
-    setSelectedSubCategory(CATEGORIES[main][0]);
+  const handleTransactionTypeChange = (type) => {
+    setTransactionType(type);
+    if (type === 'income') {
+      const incomeMains = Object.keys(CATEGORIES['収入'] || {});
+      const firstMain = incomeMains[0] || '収入';
+      setSelectedMainCategory(firstMain);
+      setSelectedSubCategory(CATEGORIES['収入'][firstMain]?.[0] || '');
+    } else {
+      setExpenseGroup('変動費');
+      const firstMain = Object.keys(CATEGORIES['変動費'])[0] || '';
+      setSelectedMainCategory(firstMain);
+      setSelectedSubCategory(CATEGORIES['変動費'][firstMain]?.[0] || '');
+    }
+    setCustomSubCategory('');
   };
 
-　　const handleSubmit = (e) => {
+  const handleExpenseGroupChange = (group) => {
+    setExpenseGroup(group);
+    const groupObj = CATEGORIES[group] || {};
+    const firstMain = Object.keys(groupObj)[0] || '';
+    setSelectedMainCategory(firstMain);
+    setSelectedSubCategory(groupObj[firstMain]?.[0] || '');
+    setCustomSubCategory('');
+  };
+
+  const handleMainCategoryChange = (main) => {
+    setSelectedMainCategory(main);
+    const targetGroup = transactionType === 'income' ? '収入' : expenseGroup;
+    const subs = CATEGORIES[targetGroup]?.[main] || [];
+    setSelectedSubCategory(subs[0] || '');
+    setCustomSubCategory('');
+  };
+
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!amount || isNaN(amount)) return;
 
+    const finalSubCategory = (selectedSubCategory === 'その他' && customSubCategory.trim() !== '')
+      ? customSubCategory.trim()
+      : selectedSubCategory;
+
     const newExpense = {
-      // 編集時の場合は既存の id を必ず含める
       ...(initialData && initialData.id ? { id: initialData.id } : {}),
       amount: Number(amount),
       date: date,
       category: selectedMainCategory,
-      sub_category: selectedSubCategory,
+      sub_category: finalSubCategory,
       payment_source: paymentSource,
       memo: memo || null,
-      is_pending: isPending, 
+      is_pending: isPending,
     };
 
-    // 親のSupabase保存処理を実行
     onAddExpense(newExpense);
 
-    // ★ 修正：編集モーダルのときだけ閉じて、新規入力のときは未整理・通常問わず確認画面をずっと表示させる
     if (initialData) {
-      if (typeof onClose === 'function') {
-        onClose(); // 編集のときはモーダルを閉じる
-      }
+      if (typeof onClose === 'function') onClose();
     } else {
-      // 新規作成のときは、必ず確認（プレビュー）画面にセットしてずっと表示させる
       setSubmittedData(newExpense);
     }
   };
 
-  // 1. 続けて入力ボタン
   const handleContinueInput = () => {
     setSubmittedData(null);
     setAmount('');
     setMemo('');
+    setCustomSubCategory('');
   };
 
-  // 2. 修正するボタン
   const handleEdit = () => {
     setSubmittedData(null);
   };
 
-  // 3. 完了ボタン（ここで初めて履歴へ飛ぶ）
   const handleFinish = () => {
-    if (onNavigateHistory) {
-      onNavigateHistory();
-    }
+    if (onNavigateHistory) onNavigateHistory();
   };
 
-  // ── プレビュー（確認）画面 ──
   if (submittedData) {
     return (
       <div className="expense-form success-screen">
-        <h2 className="success-title">支出を保存しました</h2>
-        
+        <h2 className="success-title">記録を保存しました</h2>
         <div className="success-content-box">
-          <div className="success-row">
-            <span className="success-label">ステータス</span>
-            <span className="success-value" style={{ color: submittedData.is_pending ? '#e67e22' : '#27ae60', fontWeight: 'bold' }}>
-              {submittedData.is_pending ? '未整理 (Pending)' : '通常登録 (確定)'}
-            </span>
-          </div>
           <div className="success-row">
             <span className="success-label">金額</span>
             <span className="success-value amount">¥{submittedData.amount.toLocaleString()}</span>
@@ -111,137 +163,180 @@ export default function ExpenseForm({ onAddExpense, onNavigateHistory, initialDa
             <span className="success-label">支出元</span>
             <span className="success-value">{submittedData.payment_source}</span>
           </div>
-          {submittedData.memo && (
-            <div className="success-row">
-              <span className="success-label">メモ</span>
-              <span className="success-value">{submittedData.memo}</span>
-            </div>
-          )}
         </div>
-
         <div className="success-actions">
-          <button type="button" onClick={handleFinish} className="action-btn finish-btn">
-            完了（履歴へ）
-          </button>
-          <button type="button" onClick={handleEdit} className="action-btn edit-btn">
-            修正する
-          </button>
-          <button type="button" onClick={handleContinueInput} className="action-btn continue-btn">
-            続けて入力
-          </button>
+          <button type="button" onClick={handleFinish} className="action-btn finish-btn">完了（履歴へ）</button>
+          <button type="button" onClick={handleEdit} className="action-btn edit-btn">修正する</button>
+          <button type="button" onClick={handleContinueInput} className="action-btn continue-btn">続けて入力</button>
         </div>
       </div>
     );
   }
 
-  // ── 通常の入力フォーム画面 ──
-  return (
-    <form onSubmit={handleSubmit} className="expense-form">
-      <h1 className="expense-form-title">{initialData ? 'EDIT EXPENSE' : 'NEW ENTRY'}</h1>
+  const activeGroupKey = transactionType === 'income' ? '収入' : expenseGroup;
+  const currentGroupObj = CATEGORIES[activeGroupKey] || {};
+  const mainCategories = Object.keys(currentGroupObj);
+  const subCategories = currentGroupObj[selectedMainCategory] || [];
 
-      {/* 金額 */}
-      <div className="form-group">
-        <div className="amount-input-wrapper">
-          <span className="currency-symbol">¥</span>
+  return (
+    <form onSubmit={handleSubmit} className="expense-form modern-form">
+      <h1 className="expense-form-title">{initialData ? 'EDIT ENTRY' : 'NEW ENTRY'}</h1>
+
+      {/* 1. 支出 / 収入（下線タブ）[cite: 1] */}
+      <div className="underline-tabs">
+        <button
+          type="button"
+          onClick={() => handleTransactionTypeChange('expense')}
+          className={`underline-tab-btn ${transactionType === 'expense' ? 'active' : ''}`}
+        >
+          支出
+        </button>
+        <button
+          type="button"
+          onClick={() => handleTransactionTypeChange('income')}
+          className={`underline-tab-btn ${transactionType === 'income' ? 'active' : ''}`}
+        >
+          収入
+        </button>
+      </div>
+
+      {/* 2. 金額入力（右寄せ・シンプル）[cite: 1] */}
+      <div className="form-row amount-row">
+        <span className="currency-symbol">¥</span>
+        <input 
+          ref={inputRef}
+          type="number" 
+          inputMode="numeric"
+          pattern="\d*"
+          value={amount} 
+          onChange={(e) => setAmount(e.target.value)} 
+          placeholder="0" 
+          required
+          autoFocus
+          className="amount-input-modern"
+        />
+      </div>
+
+      {/* 3. 支出のとき：固定費と変動費（ピル型・丸い枠の選択肢） */}
+      {transactionType === 'expense' && (
+        <div className="pill-group-container">
+          {['変動費', '固定費'].map((group) => (
+            <button
+              type="button"
+              key={group}
+              onClick={() => handleExpenseGroupChange(group)}
+              className={`pill-btn ${expenseGroup === group ? 'active' : ''}`}
+            >
+              {group}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* 4. 大項目 */}
+      <div className="form-section-title">大項目</div>
+      <div className="chips-container">
+        {mainCategories.map((main) => (
+          <button
+            type="button"
+            key={main}
+            onClick={() => handleMainCategoryChange(main)}
+            className={`chip-btn ${selectedMainCategory === main ? 'active' : ''}`}
+          >
+            {main}
+          </button>
+        ))}
+      </div>
+
+      {/* 5. 中項目 */}
+      <div className="form-section-title">中項目</div>
+      <div className="chips-container">
+        {subCategories.map((sub) => (
+          <button
+            type="button"
+            key={sub}
+            onClick={() => setSelectedSubCategory(sub)}
+            className={`chip-btn ${selectedSubCategory === sub ? 'active' : ''}`}
+          >
+            {sub}
+          </button>
+        ))}
+      </div>
+
+{/* その他が選ばれたときの自由入力 */}
+      {selectedSubCategory === 'その他' && (
+        <div className="list-group" style={{ marginTop: '0px', marginBottom: '12px' }}>
+          <div className="list-item">
+            <span className="list-label">具体的な内容</span>
+            <input 
+              type="text"
+              value={customSubCategory}
+              onChange={(e) => setCustomSubCategory(e.target.value)}
+              placeholder="内容を入力"
+              required
+              className="list-value-input"
+              style={{ textAlign: 'right' }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* リスト形式の各項目（上下の線で区切る）[cite: 1] */}
+      <div className="list-group">
+        {/* 日付 */}
+        <div className="list-item">
+          <span className="list-label">日付</span>
           <input 
-            ref={inputRef}
-            type="number" 
-            inputMode="numeric"
-            pattern="\d*"
-            value={amount} 
-            onChange={(e) => setAmount(e.target.value)} 
-            placeholder="0" 
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
             required
-            autoFocus
-            className="amount-input"
+            className="list-value-input"
+          />
+        </div>
+
+        {/* 支出元 */}
+        <div className="list-item">
+          <span className="list-label">支出元</span>
+          <select 
+            value={paymentSource} 
+            onChange={(e) => setPaymentSource(e.target.value)}
+            className="list-value-select"
+          >
+            {PAYMENT_SOURCES.map(source => (
+              <option key={source} value={source}>{source}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* メモ */}
+        <div className="list-item">
+          <span className="list-label">メモ</span>
+          <input 
+            type="text"
+            value={memo}
+            onChange={(e) => setMemo(e.target.value)}
+            placeholder="任意"
+            className="list-value-input"
           />
         </div>
       </div>
 
-      {/* 大項目 */}
-      <div className="form-group">
-        <label className="form-label">大項目</label>
-        <div className="category-container">
-          {Object.keys(CATEGORIES).map((main) => (
-            <button
-              type="button"
-              key={main}
-              onClick={() => handleMainCategoryChange(main)}
-              className={`category-btn ${selectedMainCategory === main ? 'main-active' : 'main-default'}`}
-            >
-              {main}
-            </button>
-          ))}
-        </div>
+      {/* ステータス（ボタンをやめてシンプルなチェックボックスに変更） */}
+      <div className="checkbox-row">
+        <label className="checkbox-label">
+          <input 
+            type="checkbox"
+            checked={isPending}
+            onChange={(e) => setIsPending(e.target.checked)}
+            className="custom-checkbox"
+          />
+          <span>未整理（あとで確認する）として保存する</span>
+        </label>
       </div>
 
-      {/* 中項目 */}
-      <div className="form-group">
-        <label className="form-label">中項目</label>
-        <div className="category-container">
-          {CATEGORIES[selectedMainCategory].map((sub) => (
-            <button
-              type="button"
-              key={sub}
-              onClick={() => setSelectedSubCategory(sub)}
-              className={`category-btn ${selectedSubCategory === sub ? 'sub-active' : 'sub-default'}`}
-            >
-              {sub}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 日付 */}
-      <div className="form-group">
-        <label className="form-label">日付</label>
-        <input 
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          required
-          className="date-input"
-        />
-      </div>
-
-      {/* 支出元 */}
-      <div className="form-group">
-        <label className="form-label">支出元</label>
-        <select 
-          value={paymentSource} 
-          onChange={(e) => setPaymentSource(e.target.value)}
-          className="payment-select"
-        >
-          {PAYMENT_SOURCES.map(source => (
-            <option key={source} value={source}>{source}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* メモ */}
-      <div className="form-group">
-        <label className="form-label">メモ（任意）</label>
-        <input 
-          type="text"
-          value={memo}
-          onChange={(e) => setMemo(e.target.value)}
-          className="memo-input"
-        />
-      </div>
-
-      {/* ★ 記録ボタンの上のPendingトグルボタン */}
-      <div className="form-group pending-toggle-group">
-        <button
-          type="button"
-          onClick={() => setIsPending(!isPending)}
-          className={`pending-toggle-btn ${isPending ? 'is-pending' : 'is-confirmed'}`}
-        >
-          {isPending ? '📌 ステータス: 未整理 (Pending) [ON]' : '📌 ステータス: 通常登録 (確定) [OFF]'}
-        </button>
-      </div>
-
-      <button type="submit" className="submit-btn" style={{ marginTop: '10px' }}>
-        {initialData ? '更新して確定する' : '記録する'}
+      <button type="submit" className="submit-btn-modern">
+        {initialData ? '更新して確定する' : '保存'}
       </button>
     </form>
   );

@@ -1,4 +1,6 @@
+// Reactフック
 import { useState, useEffect } from "react";
+// 各ページコンポーネント
 import ExpenseForm from "./components/pages/001_ExpenseForm/ExpenseForm";
 import ExpenseHistory from "./components/pages/002_ExpenseHistory/ExpenseHistory";
 import BudgetStatus from "./components/pages/003_BudgetStatus/BudgetStatus";
@@ -6,13 +8,18 @@ import AssetOverview from "./components/pages/004_AssetOverview/AssetOverview";
 import MonthlySummary from "./components/pages/005_MonthlySummary/MonthlySummary";
 import LoanManagement from "./components/pages/006_LoanManagement/LoanManagement";
 import BottomNav from "./components/common/BottomNav";
+// 共通パーツ・設定
 import { supabase } from "./supabase";
 import "./Kakeibo.css";
 
 export default function Kakeibo() {
-  const [expenses, setExpenses] = useState([]);
+  // 取得した支出・収入などの全データを保持する配列
+  const [expenses, setExpenses] = useState([]); 
+  // 現在表示している画面（タブ）の識別ID
   const [activeTab, setActiveTab] = useState('input');
 
+  // Supabase の expenses テーブルからデータを全件取得し、
+  // 作成日時順（降順）に並べ替えて expenses ステートに保存
   const fetchExpenses = async () => {
     const { data, error } = await supabase
       .from('expenses')
@@ -26,11 +33,13 @@ export default function Kakeibo() {
     }
   };
 
+  // コンポーネントが最初に描画されたタイミングで 
+  // fetchExpenses() を1度だけ実行
   useEffect(() => {
     fetchExpenses();
   }, []);
 
-  // 新規追加ハンドラー
+  // 新規データを整形（payload）し、expenses テーブルへ追加（insert）後、一覧を再取得
   const handleAddExpense = async (newExpense) => {
     const payload = {
       amount: Number(newExpense.amount),
@@ -55,6 +64,7 @@ export default function Kakeibo() {
   };
 
   // 削除ハンドラー
+  // 指定された id のデータを expenses テーブルから削除（delete）後、一覧を再取得
   const handleDeleteExpense = async (id) => {
     const { error } = await supabase
       .from('expenses')
@@ -69,6 +79,7 @@ export default function Kakeibo() {
   };
 
   // 更新ハンドラー
+  // 指定された id のデータ内容を更新（update）後、一覧を再取得
   const handleUpdateExpense = async (updatedItem) => {
     const { error } = await supabase
       .from('expenses')
@@ -92,11 +103,11 @@ export default function Kakeibo() {
   };
 
   return (
-    <div className="kakeibo-container">
+    <div className={`kakeibo-container tab-${activeTab}`}>
 
       {/* 1. 入力 */}
       {activeTab === 'input' && (
-        <div>
+        <div className="portrait-only-view">
           <ExpenseForm 
             onAddExpense={handleAddExpense} 
             onNavigateHistory={() => setActiveTab('history')} 
@@ -106,7 +117,7 @@ export default function Kakeibo() {
 
       {/* 2. 履歴 */}
       {activeTab === 'history' && (
-        <div>
+        <div className="portrait-only-view">
           <ExpenseHistory 
             expenses={expenses} 
             onDeleteExpense={handleDeleteExpense} 
@@ -117,28 +128,28 @@ export default function Kakeibo() {
 
       {/* 3. 予算残高 */}
       {activeTab === 'budgetStatus' && (
-        <div>
+        <div className="portrait-only-view">
           <BudgetStatus expenses={expenses} />
         </div>
       )}
 
       {/* 4. 資産一覧 */}
       {activeTab === 'assetOverview' && (
-        <div>
+        <div className="portrait-only-view">
           <AssetOverview expenses={expenses} />
         </div>
       )}
 
       {/* 5. 月間収支 */}
       {activeTab === 'monthlySummary' && (
-        <div>
+        <div className="portrait-only-view">
           <MonthlySummary expenses={expenses} />
         </div>
       )}
 
-      {/* 6. ローン管理 */}
+      {/* 6. ローン管理 (縦横両対応) */}
       {activeTab === 'loanManagement' && (
-        <div>
+        <div className="landscape-supported-view">
           <LoanManagement expenses={expenses} />
         </div>
       )}
