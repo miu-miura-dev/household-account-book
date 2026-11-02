@@ -8,7 +8,7 @@ git add .
 
 # 3. コミットを作成
 
-git commit -m "feat: ダッシュボード修正"
+git commit -m "feat: 更新"
 
 # 4. リモートリポジトリ（GitHub）のURLを登録
 

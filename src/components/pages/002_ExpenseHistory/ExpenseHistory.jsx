@@ -32,6 +32,19 @@ export default function ExpenseHistory({ expenses, onDeleteExpense, onDelete, on
     return val === true || val === 'true' || val === '1' || val === 1;
   };
 
+  // 振替アイテムかどうかを判別する判定関数
+  const isTransferItem = (item) => {
+    const val = item.is_transfer !== undefined ? item.is_transfer : item.isTransfer;
+    return val === true || val === 'true' || val === '1' || val === 1;
+  };
+
+  // 収入データかどうかを判別する判定関数
+  const isIncomeItem = (item) => {
+    const cat = item.category || '';
+    const subCat = item.sub_category || item.subCategory || '';
+    return cat === '収入' || subCat.includes('収入') || subCat.includes('給与');
+  };
+
   const pendingItems = (expenses || []).filter(item => isPendingItem(item));
   const normalItems = (expenses || []).filter(item => !isPendingItem(item));
 
@@ -45,10 +58,9 @@ export default function ExpenseHistory({ expenses, onDeleteExpense, onDelete, on
   // 3. データ内の月 ＋ 「当月」を必ずセットにして重複を排除・降順ソート
   const availableMonths = Array.from(new Set([...rawMonths, currentYearMonth])).sort().reverse();
 
-  // 4. 初期値・選択中の月のステート（データがなくても必ず当月が選択される）
+  // 4. 初期値・選択中の月のステート
   const [selectedYearMonth, setSelectedYearMonth] = useState(currentYearMonth);
 
-  // 選択中の月がリストにない場合のフォールバック
   if (!availableMonths.includes(selectedYearMonth)) {
     setSelectedYearMonth(currentYearMonth);
   }
@@ -72,9 +84,16 @@ export default function ExpenseHistory({ expenses, onDeleteExpense, onDelete, on
     return formatYearMonth(item.date) === selectedYearMonth;
   });
 
-  const validExpenses = filteredNormalItems.filter(item => !(item.isExcluded || item.is_excluded));
+  // ★ 集計用の有効データ：除外・振替・収入を除いた純粋な支出データ
+  const validExpenses = filteredNormalItems.filter(item => {
+    const isExcluded = Boolean(item.isExcluded || item.is_excluded);
+    return !isExcluded && !isTransferItem(item) && !isIncomeItem(item);
+  });
+
+  // ★ 今月全体の純支出合計
   const monthTotal = validExpenses.reduce((sum, item) => sum + Number(item.amount || 0), 0);
 
+  // ★ 楽天クレカの純支出合計
   const rakutenTotal = validExpenses.reduce((sum, item) => {
     const payment = item.payment_source || item.paymentSource || '';
     if (payment.includes('楽天')) return sum + Number(item.amount || 0);
@@ -157,7 +176,7 @@ export default function ExpenseHistory({ expenses, onDeleteExpense, onDelete, on
         </div>
       )}
 
-      {/* ── ② 年月選択バー（＜ YYYY年MM月 ＞） ── */}
+      {/* ── ② 年月選択バー ── */}
       <div className="month-selector-bar">
         <button 
           type="button" 
@@ -217,7 +236,10 @@ export default function ExpenseHistory({ expenses, onDeleteExpense, onDelete, on
       ) : (
         sortedDates.map((date) => {
           const dayItems = groupedByDate[date];
-          const dayTotal = dayItems.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+          // 日別ヘッダーの合計額計算（集計対象外・振替・収入を除いた実際の支出額）
+          const dayTotal = dayItems
+            .filter(item => !(item.is_excluded || item.isExcluded) && !isTransferItem(item) && !isIncomeItem(item))
+            .reduce((sum, item) => sum + Number(item.amount || 0), 0);
 
           return (
             <div key={date} className="expense-date-group">
@@ -231,26 +253,30 @@ export default function ExpenseHistory({ expenses, onDeleteExpense, onDelete, on
                   const subCategory = item.sub_category || item.subCategory;
                   const paymentSource = item.payment_source || item.paymentSource;
                   const isExcluded = Boolean(item.is_excluded || item.isExcluded);
+                  const isTransfer = isTransferItem(item);
+                  const isIncome = isIncomeItem(item);
 
                   return (
                     <li 
                       key={item.id} 
-                      className={`expense-history-item ${isExcluded ? 'excluded-item' : ''}`}
+                      className={`expense-history-item ${isExcluded || isTransfer ? 'excluded-item' : ''}`}
                     >
                       <div className="expense-history-details">
                         <div className="expense-history-main-row">
-                          <span className={`expense-history-category-main ${isExcluded ? 'strike' : ''}`}>
+                          <span className={`expense-history-category-main ${isExcluded || isTransfer ? 'strike' : ''}`}>
                             {subCategory}
                           </span>
                           <span className="expense-history-payment">{paymentSource}</span>
-                          {isExcluded && <span className="excluded-badge">[集計外]</span>}
+                          {isTransfer && <span className="excluded-badge">[振替]</span>}
+                          {isExcluded && !isTransfer && <span className="excluded-badge">[集計外]</span>}
+                          {isIncome && <span className="income-badge">[収入]</span>}
                         </div>
                         {item.memo && <div className="expense-history-memo">{item.memo}</div>}
                       </div>
 
                       <div className="expense-history-right">
-                        <span className={`expense-history-amount ${isExcluded ? 'strike' : ''}`}>
-                          ¥{Number(item.amount).toLocaleString()}
+                        <span className={`expense-history-amount ${isExcluded || isTransfer ? 'strike' : ''}`}>
+                          {isIncome ? '+' : ''}¥{Number(item.amount).toLocaleString()}
                         </span>
                         
                         <div className="action-buttons-group">

@@ -199,3 +199,247 @@
   text-align: right;
   font-size: 0.8rem;
 }
+
+/* 月切り替えバー（ExpenseHistoryと共通のデザイン） */
+.month-selector-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 6px 12px;
+  margin-bottom: 12px;
+}
+
+.month-arrow-btn {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #475569;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: background-color 0.15s ease;
+}
+
+.month-arrow-btn:hover:not(:disabled) {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.month-arrow-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.month-display-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.month-selector-select {
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0f172a;
+  outline: none;
+  cursor: pointer;
+  text-align-last: center;
+}
+
+/* ── 月別推移グラフセクション ── */
+.source-trend-chart-section {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.chart-section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.trend-bars-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  height: 90px;
+  gap: 6px;
+  padding-top: 10px;
+}
+
+.trend-bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  cursor: pointer;
+  height: 100%;
+  justify-content: flex-end;
+  transition: transform 0.15s ease;
+}
+
+.trend-bar-col:hover {
+  transform: translateY(-2px);
+}
+
+.trend-bar-wrapper {
+  width: 16px;
+  height: 60px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.trend-bar-fill {
+  width: 100%;
+  background: #cbd5e1;
+  border-radius: 4px 4px 0 0;
+  transition: height 0.3s ease;
+}
+
+/* 選択中の月のバーの色を目立たせる */
+.trend-bar-col.active-month .trend-bar-wrapper {
+  background: #dbeafe;
+}
+
+.trend-bar-col.active-month .trend-bar-fill {
+  background: #3b82f6;
+}
+
+.trend-bar-label {
+  font-size: 0.65rem;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.trend-bar-col.active-month .trend-bar-label {
+  color: #1d4ed8;
+}
+
+.trend-bar-val {
+  font-size: 0.55rem;
+  color: #94a3b8;
+}
+
+/* ── 横スクロール対応グラフセクション ── */
+.source-trend-chart-section {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 8px 8px;
+  margin-bottom: 14px;
+}
+
+.chart-section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+
+/* 横スクロールラッパー */
+.trend-scroll-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* スマホで滑らかにスクロール */
+  padding-bottom: 4px;
+}
+
+/* スクロールバーのカスタマイズ */
+.trend-scroll-wrapper::-webkit-scrollbar {
+  height: 4px;
+}
+.trend-scroll-wrapper::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+/* 12か月分並べるコンテナ（最小幅を持たせて横スクロール化） */
+.trend-bars-container-12m {
+  display: flex;
+  align-items: flex-end;
+  height: 100px;
+  min-width: 480px; /* 12ヶ月分がスクロールできる最小幅 */
+  gap: 6px;
+  padding: 0 4px;
+}
+
+.trend-bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 32px;
+  cursor: pointer;
+  height: 100%;
+  justify-content: flex-end;
+  transition: transform 0.15s ease;
+}
+
+.trend-bar-col:hover {
+  transform: translateY(-2px);
+}
+
+.trend-bar-val {
+  font-size: 0.55rem;
+  color: #94a3b8;
+  margin-bottom: 2px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.trend-bar-col.active-month .trend-bar-val {
+  color: #2563eb;
+  font-weight: 800;
+}
+
+.trend-bar-wrapper {
+  width: 14px;
+  height: 60px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.trend-bar-fill {
+  width: 100%;
+  background: #94a3b8;
+  border-radius: 4px 4px 0 0;
+  transition: height 0.3s ease;
+}
+
+/* 選択中の月（Active）のハイライト表示 */
+.trend-bar-col.active-month .trend-bar-wrapper {
+  background: #dbeafe;
+}
+
+.trend-bar-col.active-month .trend-bar-fill {
+  background: #2563eb;
+}
+
+.trend-bar-label {
+  font-size: 0.65rem;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.trend-bar-col.active-month .trend-bar-label {
+  color: #1d4ed8;
+  font-weight: 900;
+}
