@@ -101,7 +101,6 @@ const SUMMARY_SECTIONS = [
       { id: 'cf_rakuten', label: '楽天銀行', keyName: 'payment_source' },
       { id: 'cf_smbc', label: '三井住友銀行', keyName: 'payment_source' },
       { id: 'cf_yucho', label: 'ゆうちょ銀行', keyName: 'payment_source' },
-      { id: 'cf_cash', label: '現金', keyName: 'payment_source' },
       { id: 'cf_paypay', label: 'PayPay', keyName: 'payment_source' },
       { id: 'cf_suica', label: 'Suica', keyName: 'payment_source' },
       { id: 'cf_marutoku', label: 'まるとく', keyName: 'payment_source' },
@@ -138,43 +137,49 @@ export default function MonthlySummary({ expenses = [] }) {
 
   const [isSettingOpen, setIsSettingOpen] = useState(false);
 
-  // ── Supabaseから予定金額をロード（テーブル未作成でもLocalStorageにフォールバック） ──
-  useEffect(() => {
-    fetchDefaultPlanned();
-  }, []);
+  // ── Supabaseからデータ同期 ──
+  const fetchAllPlans = async () => {
+    try {
+      const { data, error } = await supabase.from('monthly_plans').select('*');
+      if (!error && data) {
+        const defMap = {};
+        const monthMap = {};
 
-  useEffect(() => {
-    if (selectedMonth) {
-      fetchMonthlyPlanned(selectedMonth);
-    }
-  }, [selectedMonth, defaultPlanned]);
+        data.forEach(row => {
+          if (row.month === 'default') {
+            defMap[row.item_id] = row.amount;
+          } else {
+            if (!monthMap[row.month]) monthMap[row.month] = {};
+            monthMap[row.month][row.item_id] = row.amount;
+          }
+        });
 
-  const fetchDefaultPlanned = async () => {
-    const { data, error } = await supabase.from('monthly_plans').select('*').eq('month', 'default');
-    if (!error && data) {
-      const defMap = {};
-      data.forEach(row => defMap[row.item_id] = row.amount);
-      setDefaultPlanned(defMap);
-    } else {
-      const saved = localStorage.getItem('kakeibo_default_monthly_planned');
-      if (saved) setDefaultPlanned(JSON.parse(saved));
-    }
+        setDefaultPlanned(defMap);
+        if (selectedMonth && monthMap[selectedMonth]) {
+          setPlannedBudgets(monthMap[selectedMonth]);
+        }
+        return;
+      }
+    } catch (e) {}
+
+    // フォールバック（LocalStorage）
+    const savedDef = localStorage.getItem('kakeibo_default_monthly_planned');
+    if (savedDef) setDefaultPlanned(JSON.parse(savedDef));
+
+    const savedMonth = localStorage.getItem(`kakeibo_planned_${selectedMonth}`);
+    if (savedMonth) setPlannedBudgets(JSON.parse(savedMonth));
   };
 
-  const fetchMonthlyPlanned = async (month) => {
-    const { data, error } = await supabase.from('monthly_plans').select('*').eq('month', month);
-    if (!error && data && data.length > 0) {
-      const planMap = {};
-      data.forEach(row => planMap[row.item_id] = row.amount);
-      setPlannedBudgets(planMap);
-    } else {
-      const saved = localStorage.getItem(`kakeibo_planned_${month}`);
-      if (saved) {
-        setPlannedBudgets(JSON.parse(saved));
-      } else {
-        setPlannedBudgets(defaultPlanned);
-      }
+  useEffect(() => {
+    fetchAllPlans();
+  }, [selectedMonth]);
+
+  // 各項目の予定金額を取得（個別手入力があればそれを優先、なければ設定のデフォルト値を使用）
+  const getPlannedValue = (id) => {
+    if (plannedBudgets[id] !== undefined && plannedBudgets[id] !== '') {
+      return plannedBudgets[id];
     }
+    return defaultPlanned[id] !== undefined ? defaultPlanned[id] : '';
   };
 
   const handlePlannedChange = async (id, value) => {
@@ -185,12 +190,14 @@ export default function MonthlySummary({ expenses = [] }) {
     setPlannedBudgets(updated);
     localStorage.setItem(`kakeibo_planned_${selectedMonth}`, JSON.stringify(updated));
 
-    await supabase.from('monthly_plans').upsert({
-      month: selectedMonth,
-      item_id: id,
-      amount: numVal === '' ? 0 : numVal,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'month,item_id' }).catch(() => {});
+    try {
+      await supabase.from('monthly_plans').upsert({
+        month: selectedMonth,
+        item_id: id,
+        amount: numVal === '' ? 0 : numVal,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'month,item_id' });
+    } catch (e) {}
   };
 
   const handleSaveDefaultSettings = async (newDefaults) => {
@@ -206,7 +213,9 @@ export default function MonthlySummary({ expenses = [] }) {
     }));
 
     if (upsertRows.length > 0) {
-      await supabase.from('monthly_plans').upsert(upsertRows, { onConflict: 'month,item_id' }).catch(() => {});
+      try {
+        await supabase.from('monthly_plans').upsert(upsertRows, { onConflict: 'month,item_id' });
+      } catch (e) {}
     }
   };
 
@@ -276,7 +285,7 @@ export default function MonthlySummary({ expenses = [] }) {
     let planned = 0;
     let actual = 0;
     const accumulate = (item) => {
-      planned += (Number(plannedBudgets[item.id]) || 0);
+      planned += (Number(getPlannedValue(item.id)) || 0);
       actual += getActualAmount(item);
     };
     if (secObj.items) secObj.items.forEach(accumulate);
@@ -287,7 +296,7 @@ export default function MonthlySummary({ expenses = [] }) {
   };
 
   const calcGroupTotal = (itemsList) => {
-    const planned = itemsList.reduce((s, i) => s + (Number(plannedBudgets[i.id]) || 0), 0);
+    const planned = itemsList.reduce((s, i) => s + (Number(getPlannedValue(i.id)) || 0), 0);
     const actual = itemsList.reduce((s, i) => s + getActualAmount(i), 0);
     return { planned, actual };
   };
@@ -297,12 +306,11 @@ export default function MonthlySummary({ expenses = [] }) {
   const incomeTotal = calcSectionTotal(incomeSectionObj);
 
   const salaryGroupItems = incomeSectionObj.groups[0].items;
-  const salaryTotalPlanned = salaryGroupItems.reduce((s, i) => s + (Number(plannedBudgets[i.id]) || 0), 0);
+  const salaryTotalPlanned = salaryGroupItems.reduce((s, i) => s + (Number(getPlannedValue(i.id)) || 0), 0);
   const salaryTotalActual = salaryGroupItems.reduce((s, i) => s + getActualAmount(i), 0);
 
   const expenseTotal = calcSectionTotal(SUMMARY_SECTIONS.find(s => s.id === 'expense'));
   const borrowTotal = calcSectionTotal(SUMMARY_SECTIONS.find(s => s.id === 'borrow'));
-  const savingsTotal = calcSectionTotal(SUMMARY_SECTIONS.find(s => s.id === 'savings'));
 
   const totalIncomePlanned = carryoverTotal.planned + incomeTotal.planned + borrowTotal.planned;
   const totalIncomeActual = carryoverTotal.actual + incomeTotal.actual + borrowTotal.actual;
@@ -401,7 +409,7 @@ export default function MonthlySummary({ expenses = [] }) {
                   </div>
 
                   {sec.items && sec.items.map(item => {
-                    const rawVal = plannedBudgets[item.id];
+                    const rawVal = getPlannedValue(item.id);
                     const displayVal = rawVal !== undefined && rawVal !== '' ? Number(rawVal).toLocaleString() : '';
                     const actualVal = getActualAmount(item);
 
@@ -444,7 +452,7 @@ export default function MonthlySummary({ expenses = [] }) {
                         </div>
 
                         {isGroupOpen && group.items.map(item => {
-                          const rawVal = plannedBudgets[item.id];
+                          const rawVal = getPlannedValue(item.id);
                           const displayVal = rawVal !== undefined && rawVal !== '' ? Number(rawVal).toLocaleString() : '';
                           const actualVal = getActualAmount(item);
 
@@ -513,7 +521,7 @@ export default function MonthlySummary({ expenses = [] }) {
                               </div>
                             ) : (
                               customIncomeItems.map(item => {
-                                const rawVal = plannedBudgets[item.id];
+                                const rawVal = getPlannedValue(item.id);
                                 const displayVal = rawVal !== undefined && rawVal !== '' ? Number(rawVal).toLocaleString() : '';
                                 const actualVal = getActualAmount(item);
 
@@ -579,7 +587,7 @@ export default function MonthlySummary({ expenses = [] }) {
                               </div>
                             ) : (
                               customExpenseItems.map(item => {
-                                const rawVal = plannedBudgets[item.id];
+                                const rawVal = getPlannedValue(item.id);
                                 const displayVal = rawVal !== undefined && rawVal !== '' ? Number(rawVal).toLocaleString() : '';
                                 const actualVal = getActualAmount(item);
 
