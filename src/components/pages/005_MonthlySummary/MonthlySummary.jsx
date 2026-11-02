@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from '../../../supabase';
 import './MonthlySummary.css';
 
-// 全項目のマスター定義
+// ── 固定項目のマスター定義 ──
 const SUMMARY_SECTIONS = [
   {
     id: 'carryover',
@@ -109,26 +110,10 @@ const SUMMARY_SECTIONS = [
 ];
 
 export default function MonthlySummary({ expenses = [] }) {
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    return new Date().toISOString().slice(0, 7);
-  });
+  const [selectedMonth, setSelectedMonth] = useState(() => new Date().toISOString().slice(0, 7));
 
-  const [openSections, setOpenSections] = useState({
-    carryover: true,
-    income: true,
-    expense: true,
-    borrow: true,
-    savings: true,
-    carryforward: true,
-  });
-
-  const [openGroups, setOpenGroups] = useState({
-    'income_給与関連': true,
-    'income_その他収入': true,
-    'expense_固定費': true,
-    'expense_変動費': true,
-    'expense_その他支出': true,
-  });
+  const [openSections, setOpenSections] = useState({ carryover: true, income: true, expense: true, borrow: true, savings: true, carryforward: true });
+  const [openGroups, setOpenGroups] = useState({ 'income_給与関連': true, 'income_その他収入': true, 'expense_固定費': true, 'expense_変動費': true, 'expense_その他支出': true });
 
   const [customIncomeItems, setCustomIncomeItems] = useState(() => {
     const saved = localStorage.getItem('kakeibo_custom_income_items');
@@ -140,6 +125,9 @@ export default function MonthlySummary({ expenses = [] }) {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [plannedBudgets, setPlannedBudgets] = useState({});
+  const [defaultPlanned, setDefaultPlanned] = useState({});
+
   const [isAddIncomeModalOpen, setIsAddIncomeModalOpen] = useState(false);
   const [newIncomeLabel, setNewIncomeLabel] = useState('');
   const [newIncomeSub, setNewIncomeSub] = useState('');
@@ -148,96 +136,117 @@ export default function MonthlySummary({ expenses = [] }) {
   const [newExpenseLabel, setNewExpenseLabel] = useState('');
   const [newExpenseSub, setNewExpenseSub] = useState('');
 
-  const [defaultPlanned, setDefaultPlanned] = useState(() => {
-    const saved = localStorage.getItem('kakeibo_default_monthly_planned');
-    return saved ? JSON.parse(saved) : {};
-  });
-
-  const [plannedBudgets, setPlannedBudgets] = useState(() => {
-    const saved = localStorage.getItem(`kakeibo_planned_${selectedMonth}`);
-    if (saved) return JSON.parse(saved);
-    return defaultPlanned;
-  });
-
   const [isSettingOpen, setIsSettingOpen] = useState(false);
 
+  // ── Supabaseから予定金額をロード（テーブル未作成でもLocalStorageにフォールバック） ──
   useEffect(() => {
-    const saved = localStorage.getItem(`kakeibo_planned_${selectedMonth}`);
-    if (saved) {
-      setPlannedBudgets(JSON.parse(saved));
-    } else {
-      setPlannedBudgets(defaultPlanned);
+    fetchDefaultPlanned();
+  }, []);
+
+  useEffect(() => {
+    if (selectedMonth) {
+      fetchMonthlyPlanned(selectedMonth);
     }
   }, [selectedMonth, defaultPlanned]);
 
-  const handlePlannedChange = (id, value) => {
-    const cleanVal = value.replace(/,/g, '');
-    const updated = {
-      ...plannedBudgets,
-      [id]: cleanVal === '' ? '' : Number(cleanVal) || 0
-    };
-    setPlannedBudgets(updated);
-    localStorage.setItem(`kakeibo_planned_${selectedMonth}`, JSON.stringify(updated));
+  const fetchDefaultPlanned = async () => {
+    const { data, error } = await supabase.from('monthly_plans').select('*').eq('month', 'default');
+    if (!error && data) {
+      const defMap = {};
+      data.forEach(row => defMap[row.item_id] = row.amount);
+      setDefaultPlanned(defMap);
+    } else {
+      const saved = localStorage.getItem('kakeibo_default_monthly_planned');
+      if (saved) setDefaultPlanned(JSON.parse(saved));
+    }
   };
 
-  const handleSaveDefaultSettings = (newDefaults) => {
+  const fetchMonthlyPlanned = async (month) => {
+    const { data, error } = await supabase.from('monthly_plans').select('*').eq('month', month);
+    if (!error && data && data.length > 0) {
+      const planMap = {};
+      data.forEach(row => planMap[row.item_id] = row.amount);
+      setPlannedBudgets(planMap);
+    } else {
+      const saved = localStorage.getItem(`kakeibo_planned_${month}`);
+      if (saved) {
+        setPlannedBudgets(JSON.parse(saved));
+      } else {
+        setPlannedBudgets(defaultPlanned);
+      }
+    }
+  };
+
+  const handlePlannedChange = async (id, value) => {
+    const cleanVal = value.replace(/,/g, '');
+    const numVal = cleanVal === '' ? '' : Number(cleanVal) || 0;
+
+    const updated = { ...plannedBudgets, [id]: numVal };
+    setPlannedBudgets(updated);
+    localStorage.setItem(`kakeibo_planned_${selectedMonth}`, JSON.stringify(updated));
+
+    await supabase.from('monthly_plans').upsert({
+      month: selectedMonth,
+      item_id: id,
+      amount: numVal === '' ? 0 : numVal,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'month,item_id' }).catch(() => {});
+  };
+
+  const handleSaveDefaultSettings = async (newDefaults) => {
     setDefaultPlanned(newDefaults);
     localStorage.setItem('kakeibo_default_monthly_planned', JSON.stringify(newDefaults));
     setIsSettingOpen(false);
+
+    const upsertRows = Object.entries(newDefaults).map(([itemId, amount]) => ({
+      month: 'default',
+      item_id: itemId,
+      amount: Number(amount) || 0,
+      updated_at: new Date().toISOString()
+    }));
+
+    if (upsertRows.length > 0) {
+      await supabase.from('monthly_plans').upsert(upsertRows, { onConflict: 'month,item_id' }).catch(() => {});
+    }
   };
 
-  const handleAddCustomIncome = (e) => {
+  const handleAddCustomCategory = (e, type) => {
     e.preventDefault();
-    if (!newIncomeLabel.trim()) return;
+    const label = type === 'income' ? newIncomeLabel : newExpenseLabel;
+    const sub = type === 'income' ? newIncomeSub : newExpenseSub;
+    if (!label.trim()) return;
 
-    const uniqueId = `custom_inc_${Date.now()}`;
-    const newItem = {
-      id: uniqueId,
-      label: newIncomeLabel.trim(),
-      main: '収入',
-      sub: newIncomeSub.trim() || newIncomeLabel.trim()
-    };
+    const uniqueId = `custom_${type}_${Date.now()}`;
+    const subCat = sub.trim() || label.trim();
+    const newItem = { id: uniqueId, label: label.trim(), main: type === 'income' ? '収入' : '', sub: subCat };
 
-    const updatedList = [...customIncomeItems, newItem];
-    setCustomIncomeItems(updatedList);
-    localStorage.setItem('kakeibo_custom_income_items', JSON.stringify(updatedList));
-
-    setNewIncomeLabel('');
-    setNewIncomeSub('');
-    setIsAddIncomeModalOpen(false);
+    if (type === 'income') {
+      const updated = [...customIncomeItems, newItem];
+      setCustomIncomeItems(updated);
+      localStorage.setItem('kakeibo_custom_income_items', JSON.stringify(updated));
+      setNewIncomeLabel('');
+      setNewIncomeSub('');
+      setIsAddIncomeModalOpen(false);
+    } else {
+      const updated = [...customExpenseItems, newItem];
+      setCustomExpenseItems(updated);
+      localStorage.setItem('kakeibo_custom_expense_items', JSON.stringify(updated));
+      setNewExpenseLabel('');
+      setNewExpenseSub('');
+      setIsAddExpenseModalOpen(false);
+    }
   };
 
-  const handleDeleteCustomIncome = (id) => {
-    const updatedList = customIncomeItems.filter(item => item.id !== id);
-    setCustomIncomeItems(updatedList);
-    localStorage.setItem('kakeibo_custom_income_items', JSON.stringify(updatedList));
-  };
-
-  const handleAddCustomExpense = (e) => {
-    e.preventDefault();
-    if (!newExpenseLabel.trim()) return;
-
-    const uniqueId = `custom_exp_${Date.now()}`;
-    const newItem = {
-      id: uniqueId,
-      label: newExpenseLabel.trim(),
-      main: '',
-      sub: newExpenseSub.trim() || newExpenseLabel.trim()
-    };
-
-    const updatedList = [...customExpenseItems, newItem];
-    setCustomExpenseItems(updatedList);
-    localStorage.setItem('kakeibo_custom_expense_items', JSON.stringify(updatedList));
-
-    setNewExpenseLabel('');
-    setNewExpenseSub('');
-    setIsAddExpenseModalOpen(false);
-  };
-
-  const handleDeleteCustomExpense = (id) => {
-    const updatedList = customExpenseItems.filter(item => item.id !== id);
-    setCustomExpenseItems(updatedList);
-    localStorage.setItem('kakeibo_custom_expense_items', JSON.stringify(updatedList));
+  const handleDeleteCustomCategory = (id, type) => {
+    if (type === 'income') {
+      const updated = customIncomeItems.filter(item => item.id !== id);
+      setCustomIncomeItems(updated);
+      localStorage.setItem('kakeibo_custom_income_items', JSON.stringify(updated));
+    } else {
+      const updated = customExpenseItems.filter(item => item.id !== id);
+      setCustomExpenseItems(updated);
+      localStorage.setItem('kakeibo_custom_expense_items', JSON.stringify(updated));
+    }
   };
 
   const getActualAmount = (item) => {
@@ -263,30 +272,23 @@ export default function MonthlySummary({ expenses = [] }) {
     }, 0);
   };
 
-  const calcSectionTotal = (sectionObj) => {
+  const calcSectionTotal = (secObj) => {
     let planned = 0;
     let actual = 0;
-    const accumulateItem = (item) => {
+    const accumulate = (item) => {
       planned += (Number(plannedBudgets[item.id]) || 0);
       actual += getActualAmount(item);
     };
-    if (sectionObj.items) sectionObj.items.forEach(accumulateItem);
-    if (sectionObj.groups) {
-      sectionObj.groups.forEach(g => g.items.forEach(accumulateItem));
-    }
-    if (sectionObj.id === 'income') {
-      customIncomeItems.forEach(accumulateItem);
-    }
-    if (sectionObj.id === 'expense') {
-      customExpenseItems.forEach(accumulateItem);
-    }
+    if (secObj.items) secObj.items.forEach(accumulate);
+    if (secObj.groups) secObj.groups.forEach(g => g.items.forEach(accumulate));
+    if (secObj.id === 'income') customIncomeItems.forEach(accumulate);
+    if (secObj.id === 'expense') customExpenseItems.forEach(accumulate);
     return { planned, actual };
   };
 
-  const calcGroupTotal = (groupObj, itemsList = null) => {
-    const items = itemsList || (groupObj ? groupObj.items : []);
-    const planned = items.reduce((s, i) => s + (Number(plannedBudgets[i.id]) || 0), 0);
-    const actual = items.reduce((s, i) => s + getActualAmount(i), 0);
+  const calcGroupTotal = (itemsList) => {
+    const planned = itemsList.reduce((s, i) => s + (Number(plannedBudgets[i.id]) || 0), 0);
+    const actual = itemsList.reduce((s, i) => s + getActualAmount(i), 0);
     return { planned, actual };
   };
 
@@ -308,13 +310,8 @@ export default function MonthlySummary({ expenses = [] }) {
   const netBalancePlanned = totalIncomePlanned - expenseTotal.planned;
   const netBalanceActual = totalIncomeActual - expenseTotal.actual;
 
-  const toggleSection = (id) => {
-    setOpenSections(prev => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const toggleGroup = (key) => {
-    setOpenGroups(prev => ({ ...prev, [key]: !prev[key] }));
-  };
+  const toggleSection = (id) => setOpenSections(prev => ({ ...prev, [id]: !prev[id] }));
+  const toggleGroup = (key) => setOpenGroups(prev => ({ ...prev, [key]: !prev[key] }));
 
   return (
     <div className="monthly-summary-container">
@@ -338,11 +335,7 @@ export default function MonthlySummary({ expenses = [] }) {
           d.setMonth(d.getMonth() + 1);
           setSelectedMonth(d.toISOString().slice(0, 7));
         }}>&gt;</button>
-        <button
-          type="button"
-          className="setting-open-pill-btn"
-          onClick={() => setIsSettingOpen(true)}
-        >
+        <button type="button" className="setting-open-pill-btn" onClick={() => setIsSettingOpen(true)}>
           ⚙️ 設定
         </button>
       </div>
@@ -433,7 +426,7 @@ export default function MonthlySummary({ expenses = [] }) {
                   {sec.groups && sec.groups.map(group => {
                     const groupKey = `${sec.id}_${group.groupTitle}`;
                     const isGroupOpen = openGroups[groupKey] !== false;
-                    const groupTotal = calcGroupTotal(group);
+                    const groupTotal = calcGroupTotal(group.items);
 
                     return (
                       <div key={group.groupTitle} className="group-wrapper">
@@ -476,7 +469,6 @@ export default function MonthlySummary({ expenses = [] }) {
                     );
                   })}
 
-                  {/* ── 給与合計 ── */}
                   {sec.id === 'income' && (
                     <div className="salary-total-banner-row">
                       <span className="salary-total-label">💼 給与合計</span>
@@ -486,11 +478,10 @@ export default function MonthlySummary({ expenses = [] }) {
                     </div>
                   )}
 
-                  {/* ── その他収入 ── */}
                   {sec.id === 'income' && (() => {
                     const customGroupKey = 'income_その他収入';
                     const isCustomOpen = openGroups[customGroupKey] !== false;
-                    const customGroupTotal = calcGroupTotal(null, customIncomeItems);
+                    const customGroupTotal = calcGroupTotal(customIncomeItems);
 
                     return (
                       <div className="group-wrapper custom-income-group">
@@ -506,11 +497,7 @@ export default function MonthlySummary({ expenses = [] }) {
                             <button
                               type="button"
                               className="add-custom-item-inline-btn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setIsAddIncomeModalOpen(true);
-                              }}
-                              title="その他収入項目を追加"
+                              onClick={(e) => { e.stopPropagation(); setIsAddIncomeModalOpen(true); }}
                             >
                               ＋ 追加
                             </button>
@@ -534,14 +521,7 @@ export default function MonthlySummary({ expenses = [] }) {
                                   <div key={item.id} className="item-row indented custom-row-item">
                                     <div className="custom-label-with-delete">
                                       <span className="item-label-text">{item.label}</span>
-                                      <button 
-                                        type="button" 
-                                        className="delete-custom-item-btn"
-                                        onClick={() => handleDeleteCustomIncome(item.id)}
-                                        title="項目を削除"
-                                      >
-                                        ✕
-                                      </button>
+                                      <button type="button" className="delete-custom-item-btn" onClick={() => handleDeleteCustomCategory(item.id, 'income')} title="削除">✕</button>
                                     </div>
                                     <div className="input-cell-box">
                                       <span>¥</span>
@@ -564,11 +544,10 @@ export default function MonthlySummary({ expenses = [] }) {
                     );
                   })()}
 
-                  {/* ── その他支出 ── */}
                   {sec.id === 'expense' && (() => {
                     const customExpGroupKey = 'expense_その他支出';
                     const isCustomExpOpen = openGroups[customExpGroupKey] !== false;
-                    const customExpGroupTotal = calcGroupTotal(null, customExpenseItems);
+                    const customExpGroupTotal = calcGroupTotal(customExpenseItems);
 
                     return (
                       <div className="group-wrapper custom-expense-group">
@@ -584,11 +563,7 @@ export default function MonthlySummary({ expenses = [] }) {
                             <button
                               type="button"
                               className="add-custom-item-inline-btn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setIsAddExpenseModalOpen(true);
-                              }}
-                              title="その他支出項目を追加"
+                              onClick={(e) => { e.stopPropagation(); setIsAddExpenseModalOpen(true); }}
                             >
                               ＋ 追加
                             </button>
@@ -612,14 +587,7 @@ export default function MonthlySummary({ expenses = [] }) {
                                   <div key={item.id} className="item-row indented custom-row-item">
                                     <div className="custom-label-with-delete">
                                       <span className="item-label-text">{item.label}</span>
-                                      <button 
-                                        type="button" 
-                                        className="delete-custom-item-btn"
-                                        onClick={() => handleDeleteCustomExpense(item.id)}
-                                        title="項目を削除"
-                                      >
-                                        ✕
-                                      </button>
+                                      <button type="button" className="delete-custom-item-btn" onClick={() => handleDeleteCustomCategory(item.id, 'expense')} title="削除">✕</button>
                                     </div>
                                     <div className="input-cell-box">
                                       <span>¥</span>
@@ -667,28 +635,15 @@ export default function MonthlySummary({ expenses = [] }) {
               <h3>＋ その他収入項目の追加</h3>
               <button type="button" className="close-btn" onClick={() => setIsAddIncomeModalOpen(false)}>✕</button>
             </div>
-            <form onSubmit={handleAddCustomIncome}>
+            <form onSubmit={(e) => handleAddCustomCategory(e, 'income')}>
               <div className="modal-form-body">
                 <label className="modal-field-label">
                   項目名（表示名）
-                  <input
-                    type="text"
-                    value={newIncomeLabel}
-                    onChange={(e) => setNewIncomeLabel(e.target.value)}
-                    placeholder="例: 副業収入、メルカリ売上 など"
-                    required
-                    className="modal-text-input"
-                  />
+                  <input type="text" value={newIncomeLabel} onChange={(e) => setNewIncomeLabel(e.target.value)} placeholder="例: 副業収入" required className="modal-text-input" />
                 </label>
                 <label className="modal-field-label">
                   集計対象の中項目（任意）
-                  <input
-                    type="text"
-                    value={newIncomeSub}
-                    onChange={(e) => setNewIncomeSub(e.target.value)}
-                    placeholder="未入力の場合は項目名と同じ中項目を集計"
-                    className="modal-text-input"
-                  />
+                  <input type="text" value={newIncomeSub} onChange={(e) => setNewIncomeSub(e.target.value)} placeholder="未入力の場合は項目名と同じ" className="modal-text-input" />
                 </label>
               </div>
               <div className="modal-actions">
@@ -708,28 +663,15 @@ export default function MonthlySummary({ expenses = [] }) {
               <h3>＋ その他支出項目の追加</h3>
               <button type="button" className="close-btn" onClick={() => setIsAddExpenseModalOpen(false)}>✕</button>
             </div>
-            <form onSubmit={handleAddCustomExpense}>
+            <form onSubmit={(e) => handleAddCustomCategory(e, 'expense')}>
               <div className="modal-form-body">
                 <label className="modal-field-label">
                   項目名（表示名）
-                  <input
-                    type="text"
-                    value={newExpenseLabel}
-                    onChange={(e) => setNewExpenseLabel(e.target.value)}
-                    placeholder="例: 特別の出費、交際費予備 など"
-                    required
-                    className="modal-text-input"
-                  />
+                  <input type="text" value={newExpenseLabel} onChange={(e) => setNewExpenseLabel(e.target.value)} placeholder="例: 特別費" required className="modal-text-input" />
                 </label>
                 <label className="modal-field-label">
                   集計対象の中項目（任意）
-                  <input
-                    type="text"
-                    value={newExpenseSub}
-                    onChange={(e) => setNewExpenseSub(e.target.value)}
-                    placeholder="未入力の場合は項目名と同じ中項目を集計"
-                    className="modal-text-input"
-                  />
+                  <input type="text" value={newExpenseSub} onChange={(e) => setNewExpenseSub(e.target.value)} placeholder="未入力の場合は項目名と同じ" className="modal-text-input" />
                 </label>
               </div>
               <div className="modal-actions">
@@ -767,13 +709,8 @@ function DefaultSettingsModal({ initialDefaults, customIncomeItems, customExpens
     }
   });
 
-  customIncomeItems.forEach(i => {
-    allModalItems.push({ ...i, section: '収入 / その他収入' });
-  });
-
-  customExpenseItems.forEach(i => {
-    allModalItems.push({ ...i, section: '支出 / その他支出' });
-  });
+  customIncomeItems.forEach(i => allModalItems.push({ ...i, section: '収入 / その他収入' }));
+  customExpenseItems.forEach(i => allModalItems.push({ ...i, section: '支出 / その他支出' }));
 
   return (
     <div className="modal-overlay" onClick={onClose}>
